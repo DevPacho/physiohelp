@@ -21,6 +21,25 @@
 		"noUnusedParameters": true,
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedSideEffectImports": true,
+
+		/* Path Aliases */
+		"baseUrl": ".",
+		"paths": {
+			"@api": ["src/api/index.ts"],
+			"@assets": ["src/assets/index.ts"],
+			"@components/atoms": ["src/components/atoms/index.ts"],
+			"@components/layouts": ["src/components/layouts/index.ts"],
+			"@components/molecules": ["src/components/molecules/index.ts"],
+			"@components/organisms": ["src/components/organisms/index.ts"],
+			"@constants": ["src/constants/index.ts"],
+			"@hooks": ["src/hooks/index.ts"],
+			"@interfaces": ["src/interfaces/index.ts"],
+			"@pages": ["src/pages/index.ts"],
+			"@router": ["src/router/index.ts"],
+			"@store": ["src/store/index.ts"],
+			"@styles/*": ["src/styles/*"],
+			"@utils": ["src/utils/index.ts"]
+		}
 	},
 	"include": ["src", "vite.config.ts"]
 }
