@@ -4,4 +4,4 @@ sqlalchemy
 pydantic
 
 # In the root directory of the backend folder, you can run:
-pip install -r requirements.txt
+# pip install -r requirements.txt
