@@ -1,8 +1,6 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Date
 from sqlalchemy.orm import relationship
-
-Base = declarative_base()
+from .database import Base
 
 class User(Base):
     __tablename__ = "users"
@@ -13,31 +11,31 @@ class User(Base):
     identification = Column(String, unique=True, index=True)
     gender = Column(String)
 
-    # Relationship
-    medical_record = relationship("MedicalRecord", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    # Relación con MedicalRecord
+    medical_record = relationship("MedicalRecord", back_populates="user", uselist=False)
 
 class MedicalRecord(Base):
     __tablename__ = "medical_records"
 
     id = Column(Integer, primary_key=True, index=True)
-    date = Column(Date)
-    user_age = Column(Integer)
-    diagnosis = Column(String)
-    sessions = Column(Integer)
-    consultation_reason = Column(String)
-    user_identification = Column(String, ForeignKey("users.identification"))
+    user_id = Column(Integer, ForeignKey("users.id"))  # Usar user_id
+    date = Column(Date, nullable=True)
+    user_age = Column(Integer, nullable=True)
+    diagnosis = Column(String, nullable=True)
+    sessions = Column(Integer, nullable=True)
+    consultation_reason = Column(String, nullable=True)
 
-    # Relationships
+    # Relaciones
     user = relationship("User", back_populates="medical_record")
-    evolutions = relationship("Evolution", back_populates="medical_record", cascade="all, delete-orphan")
+    evolutions = relationship("Evolution", back_populates="medical_record")
 
 class Evolution(Base):
     __tablename__ = "evolutions"
 
     id = Column(Integer, primary_key=True, index=True)
+    medical_record_id = Column(Integer, ForeignKey("medical_records.id"))
     date = Column(Date)
     observations = Column(String)
-    medical_record_id = Column(Integer, ForeignKey("medical_records.id"))
 
-    # Relationship
+    # Relación
     medical_record = relationship("MedicalRecord", back_populates="evolutions")

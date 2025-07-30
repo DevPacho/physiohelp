@@ -1,18 +1,63 @@
-from pydantic import BaseModel, ConfigDict
-from datetime import date
-from typing import Optional, List
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from datetime import date, datetime
+from typing import Optional, List, Union
 
+# ==================== EVOLUTION SCHEMAS ====================
 
 class EvolutionBase(BaseModel):
-    date: date
+    date: str  # Cambiar a solo string
     observations: str
+
+    @field_validator('date', mode='before')
+    @classmethod
+    def parse_date(cls, v):
+        if isinstance(v, str):
+            try:
+                # Validar que sea una fecha válida y retornar string
+                datetime.strptime(v, '%Y-%m-%d')
+                return v
+            except ValueError:
+                try:
+                    # Convertir DD/MM/YYYY a YYYY-MM-DD
+                    parsed_date = datetime.strptime(v, '%d/%m/%Y')
+                    return parsed_date.strftime('%Y-%m-%d')
+                except ValueError:
+                    raise ValueError('Date must be in YYYY-MM-DD or DD/MM/YYYY format')
+        elif isinstance(v, datetime):
+            return v.strftime('%Y-%m-%d')
+        elif isinstance(v, date):
+            return v.strftime('%Y-%m-%d')
+        else:
+            raise ValueError('Date must be a string, date, or datetime object')
 
 class EvolutionCreate(EvolutionBase):
     pass
 
 class EvolutionUpdate(BaseModel):
-    date: Optional[date] = None
+    date: Optional[str] = None  # Cambiar a solo string opcional
     observations: Optional[str] = None
+
+    @field_validator('date', mode='before')
+    @classmethod
+    def parse_date(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, str):
+            try:
+                datetime.strptime(v, '%Y-%m-%d')
+                return v
+            except ValueError:
+                try:
+                    parsed_date = datetime.strptime(v, '%d/%m/%Y')
+                    return parsed_date.strftime('%Y-%m-%d')
+                except ValueError:
+                    raise ValueError('Date must be in YYYY-MM-DD or DD/MM/YYYY format')
+        elif isinstance(v, datetime):
+            return v.strftime('%Y-%m-%d')
+        elif isinstance(v, date):
+            return v.strftime('%Y-%m-%d')
+        else:
+            raise ValueError('Date must be a string, date, or datetime object')
 
 class Evolution(EvolutionBase):
     model_config = ConfigDict(from_attributes=True)
@@ -20,31 +65,77 @@ class Evolution(EvolutionBase):
     id: int
     medical_record_id: int
 
+# ==================== MEDICAL RECORD SCHEMAS ====================
 
 class MedicalRecordBase(BaseModel):
-    date: date
-    user_age: int
-    diagnosis: str
-    sessions: int
-    consultation_reason: str
-
-class MedicalRecordCreate(MedicalRecordBase):
-    pass 
-
-class MedicalRecordUpdate(BaseModel):
-    date: Optional[date] = None
+    date: Optional[str] = None  # Cambiar a solo string opcional
     user_age: Optional[int] = None
     diagnosis: Optional[str] = None
     sessions: Optional[int] = None
     consultation_reason: Optional[str] = None
 
+    @field_validator('date', mode='before')
+    @classmethod
+    def parse_date(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, str):
+            try:
+                datetime.strptime(v, '%Y-%m-%d')
+                return v
+            except ValueError:
+                try:
+                    parsed_date = datetime.strptime(v, '%d/%m/%Y')
+                    return parsed_date.strftime('%Y-%m-%d')
+                except ValueError:
+                    raise ValueError('Date must be in YYYY-MM-DD or DD/MM/YYYY format')
+        elif isinstance(v, datetime):
+            return v.strftime('%Y-%m-%d')
+        elif isinstance(v, date):
+            return v.strftime('%Y-%m-%d')
+        else:
+            raise ValueError('Date must be a string, date, or datetime object')
+
+class MedicalRecordCreate(MedicalRecordBase):
+    pass
+
+class MedicalRecordUpdate(BaseModel):
+    date: Optional[str] = None  # Cambiar a solo string opcional
+    user_age: Optional[int] = None
+    diagnosis: Optional[str] = None
+    sessions: Optional[int] = None
+    consultation_reason: Optional[str] = None
+
+    @field_validator('date', mode='before')
+    @classmethod
+    def parse_date(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, str):
+            try:
+                datetime.strptime(v, '%Y-%m-%d')
+                return v
+            except ValueError:
+                try:
+                    parsed_date = datetime.strptime(v, '%d/%m/%Y')
+                    return parsed_date.strftime('%Y-%m-%d')
+                except ValueError:
+                    raise ValueError('Date must be in YYYY-MM-DD or DD/MM/YYYY format')
+        elif isinstance(v, datetime):
+            return v.strftime('%Y-%m-%d')
+        elif isinstance(v, date):
+            return v.strftime('%Y-%m-%d')
+        else:
+            raise ValueError('Date must be a string, date, or datetime object')
+
 class MedicalRecord(MedicalRecordBase):
     model_config = ConfigDict(from_attributes=True)
     
     id: int
-    user_identification: str
+    user_id: int
     evolutions: List[Evolution] = []
 
+# ==================== USER SCHEMAS ====================
 
 class UserBase(BaseModel):
     name: str
@@ -65,20 +156,28 @@ class User(UserBase):
     model_config = ConfigDict(from_attributes=True)
     
     id: int
-    medical_record: Optional[MedicalRecord] = None 
+    medical_record: Optional[MedicalRecord] = None
 
+class UserWithMedicalRecord(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    medical_record: Optional[MedicalRecord] = None
 
-# Pagination response models
+# ==================== RESPONSE SCHEMAS ====================
+
+class UserListResponse(BaseModel):
+    users: List[User]
+    total: int
+    offset: int
+    limit: int
+
 class PaginationInfo(BaseModel):
     total: int
     page_size: int
     current_offset: int
     has_next: bool
     has_previous: bool
-
-class UserListResponse(BaseModel):
-    users: List[User]
-    pagination: PaginationInfo
 
 class MedicalRecordListResponse(BaseModel):
     medical_records: List[MedicalRecord]

@@ -1,10 +1,11 @@
 from sqlalchemy.orm import Session
 from typing import Optional
+from datetime import datetime, date  # Agregar este import
 
 from . import models, schemas
 
 
-# User
+# User functions
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
 
@@ -17,6 +18,10 @@ def get_users(db: Session, offset: int = 0, limit: int = 12):
 def get_users_count(db: Session):
     return db.query(models.User).count()
 
+# Función que faltaba y se está llamando en main.py
+def get_total_users(db: Session):
+    return db.query(models.User).count()
+
 def create_user(db: Session, user: schemas.UserCreate):
     db_user = models.User(**user.dict())
     db.add(db_user)
@@ -24,10 +29,10 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.refresh(db_user)
     return db_user
 
-def update_user(db: Session, user_id: int, user: schemas.UserUpdate):
+def update_user(db: Session, user_id: int, user_update: schemas.UserUpdate):
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if db_user:
-        for key, value in user.dict(exclude_unset=True).items():
+        for key, value in user_update.dict(exclude_unset=True).items():
             setattr(db_user, key, value)
         db.commit()
         db.refresh(db_user)
@@ -41,12 +46,16 @@ def delete_user(db: Session, user_id: int):
     return db_user
 
 
-# Medical Record
+# Medical Record functions - CORREGIDAS
 def get_medical_record(db: Session, medical_record_id: int):
     return db.query(models.MedicalRecord).filter(models.MedicalRecord.id == medical_record_id).first()
 
-def get_medical_record_by_user_identification(db: Session, user_identification: str):
-    return db.query(models.MedicalRecord).filter(models.MedicalRecord.user_identification == user_identification).first()
+def get_medical_record_by_user(db: Session, user_identification: str):
+    """Buscar medical record por identificación del usuario"""
+    user = get_user_by_identification(db, user_identification)
+    if user:
+        return db.query(models.MedicalRecord).filter(models.MedicalRecord.user_id == user.id).first()
+    return None
 
 def get_medical_records(db: Session, offset: int = 0, limit: int = 12):
     return db.query(models.MedicalRecord).offset(offset).limit(limit).all()
@@ -54,42 +63,70 @@ def get_medical_records(db: Session, offset: int = 0, limit: int = 12):
 def get_medical_records_count(db: Session):
     return db.query(models.MedicalRecord).count()
 
-def create_medical_record(db: Session, medical_record: schemas.MedicalRecordCreate, user_identification: str):
-    db_medical_record = models.MedicalRecord(**medical_record.dict(), user_identification=user_identification)
+def create_user_medical_record(db: Session, medical_record: schemas.MedicalRecordCreate, user_identification: str):
+    """Crear medical record usando la identificación del usuario"""
+    user = get_user_by_identification(db, user_identification)
+    if not user:
+        return None
+    
+    # Convertir los datos del schema a un diccionario
+    medical_record_data = medical_record.dict()
+    
+    # Asegurar que la fecha sea un objeto date si existe
+    if medical_record_data.get('date') and isinstance(medical_record_data['date'], str):
+        try:
+            medical_record_data['date'] = datetime.strptime(medical_record_data['date'], '%Y-%m-%d').date()
+        except ValueError:
+            try:
+                medical_record_data['date'] = datetime.strptime(medical_record_data['date'], '%d/%m/%Y').date()
+            except ValueError:
+                # Si no se puede parsear, se mantiene como None
+                medical_record_data['date'] = None
+    
+    # Crear el medical record
+    db_medical_record = models.MedicalRecord(**medical_record_data, user_id=user.id)
     db.add(db_medical_record)
     db.commit()
     db.refresh(db_medical_record)
     return db_medical_record
 
-def update_medical_record(db: Session, medical_record_id: int, medical_record: schemas.MedicalRecordUpdate):
-    db_medical_record = db.query(models.MedicalRecord).filter(models.MedicalRecord.id == medical_record_id).first()
+def update_medical_record(db: Session, record_id: int, medical_record_update: schemas.MedicalRecordUpdate):
+    """Actualizar medical record por ID"""
+    db_medical_record = db.query(models.MedicalRecord).filter(models.MedicalRecord.id == record_id).first()
     if db_medical_record:
-        for key, value in medical_record.dict(exclude_unset=True).items():
+        update_data = medical_record_update.dict(exclude_unset=True)
+        
+        # Asegurar que la fecha sea un objeto date si existe
+        if 'date' in update_data and update_data['date'] and isinstance(update_data['date'], str):
+            try:
+                update_data['date'] = datetime.strptime(update_data['date'], '%Y-%m-%d').date()
+            except ValueError:
+                try:
+                    update_data['date'] = datetime.strptime(update_data['date'], '%d/%m/%Y').date()
+                except ValueError:
+                    # Si no se puede parsear, se mantiene como None
+                    update_data['date'] = None
+        
+        for key, value in update_data.items():
             setattr(db_medical_record, key, value)
         db.commit()
         db.refresh(db_medical_record)
     return db_medical_record
 
-def delete_medical_record(db: Session, medical_record_id: int):
-    db_medical_record = db.query(models.MedicalRecord).filter(models.MedicalRecord.id == medical_record_id).first()
-    if db_medical_record:
-        db.delete(db_medical_record)
-        db.commit()
-    return db_medical_record
-
-
-# Evolutions (Always related to a medical record)
-def get_evolution(db: Session, evolution_id: int):
-    return db.query(models.Evolution).filter(models.Evolution.id == evolution_id).first()
-
-def get_evolution_by_medical_record(db: Session, medical_record_id: int, evolution_id: int):
-    return db.query(models.Evolution).filter(
-        models.Evolution.id == evolution_id,
-        models.Evolution.medical_record_id == medical_record_id
-    ).first()
-
 def create_evolution(db: Session, evolution: schemas.EvolutionCreate, medical_record_id: int):
-    db_evolution = models.Evolution(**evolution.dict(), medical_record_id=medical_record_id)
+    evolution_data = evolution.dict()
+    
+    # Asegurar que la fecha sea un objeto date
+    if evolution_data.get('date') and isinstance(evolution_data['date'], str):
+        try:
+            evolution_data['date'] = datetime.strptime(evolution_data['date'], '%Y-%m-%d').date()
+        except ValueError:
+            try:
+                evolution_data['date'] = datetime.strptime(evolution_data['date'], '%d/%m/%Y').date()
+            except ValueError:
+                raise ValueError('Invalid date format')
+    
+    db_evolution = models.Evolution(**evolution_data, medical_record_id=medical_record_id)
     db.add(db_evolution)
     db.commit()
     db.refresh(db_evolution)
@@ -98,7 +135,19 @@ def create_evolution(db: Session, evolution: schemas.EvolutionCreate, medical_re
 def update_evolution(db: Session, evolution_id: int, evolution: schemas.EvolutionUpdate):
     db_evolution = db.query(models.Evolution).filter(models.Evolution.id == evolution_id).first()
     if db_evolution:
-        for key, value in evolution.dict(exclude_unset=True).items():
+        update_data = evolution.dict(exclude_unset=True)
+        
+        # Asegurar que la fecha sea un objeto date si existe
+        if 'date' in update_data and update_data['date'] and isinstance(update_data['date'], str):
+            try:
+                update_data['date'] = datetime.strptime(update_data['date'], '%Y-%m-%d').date()
+            except ValueError:
+                try:
+                    update_data['date'] = datetime.strptime(update_data['date'], '%d/%m/%Y').date()
+                except ValueError:
+                    raise ValueError('Invalid date format')
+        
+        for key, value in update_data.items():
             setattr(db_evolution, key, value)
         db.commit()
         db.refresh(db_evolution)

@@ -2,6 +2,6 @@ fastapi
 uvicorn
 sqlalchemy
 pydantic
-
+reportlab
 # In the root directory of the backend folder, you can run:
 # pip install -r requirements.txt
