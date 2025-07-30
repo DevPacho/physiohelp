@@ -11,21 +11,19 @@ class User(Base):
     identification = Column(String, unique=True, index=True)
     gender = Column(String)
 
-    # Relación con MedicalRecord
     medical_record = relationship("MedicalRecord", back_populates="user", uselist=False)
 
 class MedicalRecord(Base):
     __tablename__ = "medical_records"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))  # Usar user_id
+    user_id = Column(Integer, ForeignKey("users.id"))  
     date = Column(Date, nullable=True)
     user_age = Column(Integer, nullable=True)
     diagnosis = Column(String, nullable=True)
     sessions = Column(Integer, nullable=True)
     consultation_reason = Column(String, nullable=True)
 
-    # Relaciones
     user = relationship("User", back_populates="medical_record")
     evolutions = relationship("Evolution", back_populates="medical_record")
 
@@ -37,5 +35,4 @@ class Evolution(Base):
     date = Column(Date)
     observations = Column(String)
 
-    # Relación
     medical_record = relationship("MedicalRecord", back_populates="evolutions")

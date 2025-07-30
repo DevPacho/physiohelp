@@ -18,7 +18,6 @@ def get_users(db: Session, offset: int = 0, limit: int = 12):
 def get_users_count(db: Session):
     return db.query(models.User).count()
 
-# Función que faltaba y se está llamando en main.py
 def get_total_users(db: Session):
     return db.query(models.User).count()
 
@@ -46,7 +45,7 @@ def delete_user(db: Session, user_id: int):
     return db_user
 
 
-# Medical Record functions - CORREGIDAS
+# Medical Record functions
 def get_medical_record(db: Session, medical_record_id: int):
     return db.query(models.MedicalRecord).filter(models.MedicalRecord.id == medical_record_id).first()
 
@@ -69,10 +68,8 @@ def create_user_medical_record(db: Session, medical_record: schemas.MedicalRecor
     if not user:
         return None
     
-    # Convertir los datos del schema a un diccionario
     medical_record_data = medical_record.dict()
     
-    # Asegurar que la fecha sea un objeto date si existe
     if medical_record_data.get('date') and isinstance(medical_record_data['date'], str):
         try:
             medical_record_data['date'] = datetime.strptime(medical_record_data['date'], '%Y-%m-%d').date()
@@ -80,10 +77,8 @@ def create_user_medical_record(db: Session, medical_record: schemas.MedicalRecor
             try:
                 medical_record_data['date'] = datetime.strptime(medical_record_data['date'], '%d/%m/%Y').date()
             except ValueError:
-                # Si no se puede parsear, se mantiene como None
                 medical_record_data['date'] = None
     
-    # Crear el medical record
     db_medical_record = models.MedicalRecord(**medical_record_data, user_id=user.id)
     db.add(db_medical_record)
     db.commit()
@@ -96,7 +91,6 @@ def update_medical_record(db: Session, record_id: int, medical_record_update: sc
     if db_medical_record:
         update_data = medical_record_update.dict(exclude_unset=True)
         
-        # Asegurar que la fecha sea un objeto date si existe
         if 'date' in update_data and update_data['date'] and isinstance(update_data['date'], str):
             try:
                 update_data['date'] = datetime.strptime(update_data['date'], '%Y-%m-%d').date()
@@ -104,7 +98,6 @@ def update_medical_record(db: Session, record_id: int, medical_record_update: sc
                 try:
                     update_data['date'] = datetime.strptime(update_data['date'], '%d/%m/%Y').date()
                 except ValueError:
-                    # Si no se puede parsear, se mantiene como None
                     update_data['date'] = None
         
         for key, value in update_data.items():
@@ -116,7 +109,6 @@ def update_medical_record(db: Session, record_id: int, medical_record_update: sc
 def create_evolution(db: Session, evolution: schemas.EvolutionCreate, medical_record_id: int):
     evolution_data = evolution.dict()
     
-    # Asegurar que la fecha sea un objeto date
     if evolution_data.get('date') and isinstance(evolution_data['date'], str):
         try:
             evolution_data['date'] = datetime.strptime(evolution_data['date'], '%Y-%m-%d').date()
@@ -137,7 +129,6 @@ def update_evolution(db: Session, evolution_id: int, evolution: schemas.Evolutio
     if db_evolution:
         update_data = evolution.dict(exclude_unset=True)
         
-        # Asegurar que la fecha sea un objeto date si existe
         if 'date' in update_data and update_data['date'] and isinstance(update_data['date'], str):
             try:
                 update_data['date'] = datetime.strptime(update_data['date'], '%Y-%m-%d').date()
