@@ -5,7 +5,7 @@ from typing import Optional, List, Union
 # ==================== EVOLUTION SCHEMAS ====================
 
 class EvolutionBase(BaseModel):
-    date: str  # Cambiar a solo string
+    date: str  
     observations: str
 
     @field_validator('date', mode='before')
@@ -13,12 +13,11 @@ class EvolutionBase(BaseModel):
     def parse_date(cls, v):
         if isinstance(v, str):
             try:
-                # Validar que sea una fecha válida y retornar string
                 datetime.strptime(v, '%Y-%m-%d')
                 return v
             except ValueError:
                 try:
-                    # Convertir DD/MM/YYYY a YYYY-MM-DD
+                    # Convert DD/MM/YYYY to YYYY-MM-DD
                     parsed_date = datetime.strptime(v, '%d/%m/%Y')
                     return parsed_date.strftime('%Y-%m-%d')
                 except ValueError:
@@ -34,7 +33,7 @@ class EvolutionCreate(EvolutionBase):
     pass
 
 class EvolutionUpdate(BaseModel):
-    date: Optional[str] = None  # Cambiar a solo string opcional
+    date: Optional[str] = None  
     observations: Optional[str] = None
 
     @field_validator('date', mode='before')
@@ -68,7 +67,7 @@ class Evolution(EvolutionBase):
 # ==================== MEDICAL RECORD SCHEMAS ====================
 
 class MedicalRecordBase(BaseModel):
-    date: Optional[str] = None  # Cambiar a solo string opcional
+    date: Optional[str] = None  
     user_age: Optional[int] = None
     diagnosis: Optional[str] = None
     sessions: Optional[int] = None
@@ -100,7 +99,7 @@ class MedicalRecordCreate(MedicalRecordBase):
     pass
 
 class MedicalRecordUpdate(BaseModel):
-    date: Optional[str] = None  # Cambiar a solo string opcional
+    date: Optional[str] = None  
     user_age: Optional[int] = None
     diagnosis: Optional[str] = None
     sessions: Optional[int] = None
@@ -142,6 +141,8 @@ class UserBase(BaseModel):
     last_name: str
     identification: str
     gender: str
+    address: str = None
+    phone: str = None
 
 class UserCreate(UserBase):
     pass
@@ -151,6 +152,8 @@ class UserUpdate(BaseModel):
     last_name: Optional[str] = None
     identification: Optional[str] = None
     gender: Optional[str] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
 
 class User(UserBase):
     model_config = ConfigDict(from_attributes=True)

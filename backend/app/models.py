@@ -10,7 +10,10 @@ class User(Base):
     last_name = Column(String, index=True)
     identification = Column(String, unique=True, index=True)
     gender = Column(String)
+    address = Column(String, nullable=True) 
+    phone = Column(String, nullable=True) 
 
+    # Relationship with MedicalRecord
     medical_record = relationship("MedicalRecord", back_populates="user", uselist=False)
 
 class MedicalRecord(Base):
@@ -24,6 +27,7 @@ class MedicalRecord(Base):
     sessions = Column(Integer, nullable=True)
     consultation_reason = Column(String, nullable=True)
 
+    
     user = relationship("User", back_populates="medical_record")
     evolutions = relationship("Evolution", back_populates="medical_record")
 

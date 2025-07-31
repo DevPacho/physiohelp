@@ -28,6 +28,7 @@ class NumberedCanvas:
         """Dibuja los elementos de cada página"""
         canvas = self.canvas
         
+        # background image
         if 'fondo' in self.images_data and self.images_data['fondo']:
             try:
                 canvas.saveState()
@@ -53,6 +54,7 @@ class NumberedCanvas:
                 print(f"Error drawing header image: {e}")
         
         try:
+            # Footer
             canvas.saveState()
             canvas.setFillAlpha(0.7)  
             
@@ -61,29 +63,34 @@ class NumberedCanvas:
             
             page_width = A4[0]
             
+            # First line
             line1 = "Dra. Victoria Potes Eugenes Arana  Fisioterapeuta reg. 60278 U.A.M"
             line1_width = canvas.stringWidth(line1, 'Helvetica', 9)
             x1 = (page_width - line1_width) / 2
-            y1 = 80  
+            y1 = 80  # Position Y for the first line
             canvas.drawString(x1, y1, line1)
-            
+
+            # Second line
             line2 = "Calle 10 #14a-317 La primavera Rozo"
             line2_width = canvas.stringWidth(line2, 'Helvetica', 9)
             x2 = (page_width - line2_width) / 2
-            y2 = 65  
+            y2 = 65  # 15 points below the first line
             canvas.drawString(x2, y2, line2)
-            
+
+            # Third line
             line3 = "Celular 3104387862"
             line3_width = canvas.stringWidth(line3, 'Helvetica', 9)
             x3 = (page_width - line3_width) / 2
-            y3 = 50  
+            y3 = 50  # 15 points below the second line
             canvas.drawString(x3, y3, line3)
-            
+
+            # Restore canvas state
             canvas.restoreState()
             
         except Exception as e:
             print(f"Error drawing footer text: {e}")       
         
+    
         if is_last_page and 'firma' in self.images_data and self.images_data['firma']:
             try:
                 firma_width = 150
@@ -102,7 +109,7 @@ class CustomDocTemplate(BaseDocTemplate):
         self.images_data = images_data
         self.total_pages = 1  
         self.current_page = 0
-        self.pages_built = []  
+        self.pages_built = [] 
         
         frame = Frame(
             72, 180,  
@@ -184,6 +191,7 @@ class PDFService:
         """Genera un reporte PDF para un usuario específico"""
         buffer = BytesIO()
         
+        # load images from the backend
         images_data = PDFService.load_pdf_images()
         
         doc = CustomDocTemplate(buffer, images_data, pagesize=A4)
@@ -215,11 +223,13 @@ class PDFService:
         
         story = []
         
-        title = Paragraph("HISTORIA CLÍNICA DE FISIOTERAPIA", title_style)
+        # Títle
+        title = Paragraph("HISTORIA CLÍNICA", title_style)
         story.append(title)
         story.append(Spacer(1, 20))
         
-        patient_title = Paragraph("INFORMACIÓN DEL PACIENTE", subtitle_style)
+        # Patient information
+        patient_title = Paragraph("", subtitle_style)
         story.append(patient_title)
         
         patient_data = [
@@ -228,25 +238,26 @@ class PDFService:
             ['Género:', 'Masculino' if user.gender == 'M' else 'Femenino' if user.gender == 'F' else 'Otro']
         ]
         
-        patient_table = Table(patient_data, colWidths=[2*inch, 3*inch])
+        patient_table = Table(patient_data, colWidths=[2*inch, 4*inch])
         patient_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-            ('BACKGROUND', (1, 0), (1, -1), colors.white),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
+                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+                ('BACKGROUND', (1, 0), (1, -1), colors.white),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
         ]))
         
         story.append(patient_table)
         story.append(Spacer(1, 20))
         
+        
         if hasattr(user, 'medical_record') and user.medical_record:
             medical_record = user.medical_record
             
-            medical_title = Paragraph("HISTORIA CLÍNICA", subtitle_style)
+            medical_title = Paragraph(" ", subtitle_style)
             story.append(medical_title)
             
             medical_data = [
@@ -287,6 +298,7 @@ class PDFService:
             no_medical_text = Paragraph("No hay historia clínica registrada para este paciente.", normal_style)
             story.append(no_medical_text)
                 
+        
         doc.build(story)
         
         buffer.seek(0)

@@ -14,6 +14,7 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+# Configuración CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -109,13 +110,16 @@ async def generate_user_pdf(
         
         print(f"User found: {user.name} {user.last_name}")
         
+        # Generar PDF (las imágenes se cargan internamente)
         print("Calling PDFService.generate_user_report...")
         pdf_buffer = PDFService.generate_user_report(user)
         print("PDF generated successfully")
         
+        # Preparar respuesta con nuevo formato de nombre
         filename = f"Historia clinica - {user.name} {user.last_name} - {user.identification}.pdf"
         print(f"Filename: {filename}")
         
+        # Asegurarse de que el buffer esté al inicio
         pdf_buffer.seek(0)
         
         return StreamingResponse(
@@ -164,17 +168,21 @@ def create_medical_record(
     db: Session = Depends(get_db)
 ):
     """Create or update medical record for a user by identification"""
+    # Buscar usuario por identificación
     db_user = crud.get_user_by_identification(db, identification=user_identification)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     
+    # Verificar si ya existe una historia clínica para este usuario
     existing_record = crud.get_medical_record_by_user(db, user_identification=user_identification)
     
     if existing_record:
+        # Si existe, actualizarla
         medical_record_update = schemas.MedicalRecordUpdate(**medical_record.model_dump())
         updated_record = crud.update_medical_record(db=db, record_id=existing_record.id, medical_record_update=medical_record_update)
         return updated_record
     else:
+        # Si no existe, crear una nueva
         db_medical_record = crud.create_user_medical_record(db=db, medical_record=medical_record, user_identification=user_identification)
         if db_medical_record is None:
             raise HTTPException(status_code=400, detail="Could not create medical record")
@@ -187,14 +195,17 @@ def update_medical_record(
     db: Session = Depends(get_db)
 ):
     """Update medical record for a user by identification"""
+    # Buscar usuario por identificación
     db_user = crud.get_user_by_identification(db, identification=user_identification)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     
+    # Buscar historia clínica existente
     existing_record = crud.get_medical_record_by_user(db, user_identification=user_identification)
     if existing_record is None:
         raise HTTPException(status_code=404, detail="Medical record not found")
     
+    # Actualizar
     updated_record = crud.update_medical_record(db=db, record_id=existing_record.id, medical_record_update=medical_record_update)
     return updated_record
 
