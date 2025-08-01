@@ -17,11 +17,16 @@ app = FastAPI()
 # Configuración CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=[""],
-    expose_headers=["Content-Disposition"]
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["*"],
+    expose_headers=["Content-Disposition", "Content-Type"]
 )
 
 # Dependency
@@ -74,12 +79,21 @@ def read_user_by_identification(identification: str, db: Session = Depends(get_d
     return db_user
 
 @app.put("/users/{user_id}", response_model=schemas.User, tags=["Users"])
-def update_user(user_id: int, user: schemas.UserUpdate, db: Session = Depends(get_db)):
+def update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Depends(get_db)):
     """Update user by ID"""
-    db_user = crud.get_user(db, user_id=user_id)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return crud.update_user(db=db, user_id=user_id, user=user)
+    try:
+        db_user = crud.get_user(db, user_id=user_id)
+        if db_user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        updated_user = crud.update_user(db=db, user_id=user_id, user_update=user_update)
+        if updated_user is None:
+            raise HTTPException(status_code=500, detail="Error updating user")
+        
+        return updated_user
+    except Exception as e:
+        print(f"Error updating user: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating user: {str(e)}")
 
 @app.delete("/users/{user_id}", tags=["Users"])
 def delete_user(user_id: int, db: Session = Depends(get_db)):
@@ -99,7 +113,7 @@ async def generate_user_pdf(
     user_id: int, 
     db: Session = Depends(get_db)
 ):
-    """Genera un reporte PDF para un usuario específico"""
+    """Genera un reporte PDF - Historia clínica o Informe final según el tipo de paciente"""
     try:
         print(f"Generating PDF for user ID: {user_id}")
         
@@ -108,15 +122,32 @@ async def generate_user_pdf(
             print(f"User not found with ID: {user_id}")
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         
-        print(f"User found: {user.name} {user.last_name}")
+        print(f"User found: {user.name} {user.last_name}, Type: {user.type}")
         
-        # Generar PDF (las imágenes se cargan internamente)
-        print("Calling PDFService.generate_user_report...")
-        pdf_buffer = PDFService.generate_user_report(user)
+        # Generar PDF según el tipo de paciente
+        if user.type == "Particular":
+            print("Generating final report for Particular patient...")
+            pdf_buffer = PDFService.generate_final_report(user)
+            filename_prefix = "Informe_final"
+        else:  # user.type == "SOAT"
+            print("Generating medical history for SOAT patient...")
+            pdf_buffer = PDFService.generate_user_report(user)
+            filename_prefix = "Historia_clinica"
+        
         print("PDF generated successfully")
         
-        # Preparar respuesta con nuevo formato de nombre
-        filename = f"Historia clinica - {user.name} {user.last_name} - {user.identification}.pdf"
+        # Preparar respuesta con formato de nombre limpio
+        import re
+        
+        # Limpiar nombre y apellido
+        safe_name = re.sub(r'[^\w\s]', '', f"{user.name} {user.last_name}")
+        safe_name = re.sub(r'\s+', '_', safe_name.strip())
+        
+        # Limpiar identificación
+        safe_identification = re.sub(r'[^\w]', '', user.identification)
+        
+        filename = f"{filename_prefix}_{safe_name}_{safe_identification}.pdf"
+        
         print(f"Filename: {filename}")
         
         # Asegurarse de que el buffer esté al inicio
@@ -125,7 +156,11 @@ async def generate_user_pdf(
         return StreamingResponse(
             io.BytesIO(pdf_buffer.read()),
             media_type="application/pdf",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": "application/pdf",
+                "Access-Control-Expose-Headers": "Content-Disposition"
+            }
         )
         
     except Exception as e:
@@ -208,6 +243,21 @@ def update_medical_record(
     # Actualizar
     updated_record = crud.update_medical_record(db=db, record_id=existing_record.id, medical_record_update=medical_record_update)
     return updated_record
+
+@app.delete("/medical-records/{medical_record_id}", tags=["Medical Records"])
+def delete_medical_record(medical_record_id: int, db: Session = Depends(get_db)):
+    """Delete a medical record by ID"""
+    # Verificar que el medical record existe
+    db_medical_record = crud.get_medical_record(db, medical_record_id=medical_record_id)
+    if db_medical_record is None:
+        raise HTTPException(status_code=404, detail="Medical record not found")
+    
+    # Eliminar el medical record
+    success = crud.delete_medical_record(db=db, medical_record_id=medical_record_id)
+    if success:
+        return {"message": "Medical record deleted successfully"}
+    else:
+        raise HTTPException(status_code=500, detail="Error deleting medical record")
 
 # Evolution endpoints
 @app.post("/medical-records/{medical_record_id}/evolutions/", response_model=schemas.Evolution, tags=["Evolutions"])

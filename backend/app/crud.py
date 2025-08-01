@@ -29,21 +29,52 @@ def create_user(db: Session, user: schemas.UserCreate):
     return db_user
 
 def update_user(db: Session, user_id: int, user_update: schemas.UserUpdate):
-    db_user = db.query(models.User).filter(models.User.id == user_id).first()
-    if db_user:
-        for key, value in user_update.dict(exclude_unset=True).items():
-            setattr(db_user, key, value)
+    """Update user by ID"""
+    try:
+        db_user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not db_user:
+            return None
+        
+        # Obtener solo los campos que no son None
+        update_data = user_update.dict(exclude_unset=True, exclude_none=True)
+        
+        # Actualizar solo los campos proporcionados
+        for field, value in update_data.items():
+            setattr(db_user, field, value)
+        
         db.commit()
         db.refresh(db_user)
-    return db_user
+        return db_user
+        
+    except Exception as e:
+        print(f"Error in update_user: {str(e)}")
+        db.rollback()
+        return None
 
 def delete_user(db: Session, user_id: int):
-    db_user = db.query(models.User).filter(models.User.id == user_id).first()
-    if db_user:
+    """Delete user by ID"""
+    try:
+        db_user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not db_user:
+            return None
+        
+        # También eliminar el medical record asociado si existe
+        db_medical_record = db.query(models.MedicalRecord).filter(models.MedicalRecord.user_id == user_id).first()
+        if db_medical_record:
+            # Eliminar evoluciones asociadas
+            db.query(models.Evolution).filter(models.Evolution.medical_record_id == db_medical_record.id).delete()
+            # Eliminar medical record
+            db.delete(db_medical_record)
+        
+        # Eliminar usuario
         db.delete(db_user)
         db.commit()
-    return db_user
-
+        return True
+        
+    except Exception as e:
+        print(f"Error in delete_user: {str(e)}")
+        db.rollback()
+        return False
 
 # Medical Record functions
 def get_medical_record(db: Session, medical_record_id: int):
@@ -105,6 +136,26 @@ def update_medical_record(db: Session, record_id: int, medical_record_update: sc
         db.commit()
         db.refresh(db_medical_record)
     return db_medical_record
+
+def delete_medical_record(db: Session, medical_record_id: int):
+    """Delete medical record by ID"""
+    try:
+        db_medical_record = db.query(models.MedicalRecord).filter(models.MedicalRecord.id == medical_record_id).first()
+        if not db_medical_record:
+            return None
+        
+        # Eliminar todas las evoluciones asociadas primero
+        db.query(models.Evolution).filter(models.Evolution.medical_record_id == medical_record_id).delete()
+        
+        # Eliminar el medical record
+        db.delete(db_medical_record)
+        db.commit()
+        return True
+        
+    except Exception as e:
+        print(f"Error in delete_medical_record: {str(e)}")
+        db.rollback()
+        return False
 
 def create_evolution(db: Session, evolution: schemas.EvolutionCreate, medical_record_id: int):
     evolution_data = evolution.dict()

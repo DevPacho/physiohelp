@@ -188,7 +188,7 @@ class PDFService:
 
     @staticmethod
     def generate_user_report(user: models.User) -> BytesIO:
-        """Genera un reporte PDF para un usuario específico"""
+        """Genera una historia clinica PDF para un usuario específico"""
         buffer = BytesIO()
         
         # load images from the backend
@@ -299,6 +299,101 @@ class PDFService:
             story.append(no_medical_text)
                 
         
+        doc.build(story)
+        
+        buffer.seek(0)
+        return buffer
+    
+    @staticmethod
+    def generate_final_report(user: models.User) -> BytesIO:
+        """Genera un informe final PDF para un usuario específico"""
+        buffer = BytesIO()
+        
+        # Cargar imágenes del backend
+        images_data = PDFService.load_pdf_images()
+        
+        # Crear documento con template personalizado
+        doc = CustomDocTemplate(buffer, images_data, pagesize=A4)
+        
+        # Estilos (iguales que generate_user_report)
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            spaceAfter=30,
+            alignment=TA_CENTER,
+            textColor=colors.darkblue
+        )
+        
+        subtitle_style = ParagraphStyle(
+            'CustomSubtitle',
+            parent=styles['Heading2'],
+            fontSize=14,
+            spaceAfter=12,
+            textColor=colors.darkblue
+        )
+        
+        normal_style = ParagraphStyle(
+            'CustomNormal',
+            parent=styles['Normal'],
+            fontSize=10,
+            spaceAfter=6
+        )
+        
+        # Contenido del PDF
+        story = []
+        
+        # TÍTULO PRINCIPAL - INFORME FINAL
+        title = Paragraph("INFORME FINAL", title_style)
+        story.append(title)
+        story.append(Spacer(1, 20))
+        
+        # Información del informe final
+        if hasattr(user, 'medical_record') and user.medical_record:
+            medical_record = user.medical_record
+            
+            # Tabla de información del informe final
+            report_data = [
+                ['Fecha:', medical_record.date.strftime('%d/%m/%Y') if hasattr(medical_record, 'date') and medical_record.date else 'No especificada'],
+                ['Nombre:', f"{user.name} {user.last_name}"],
+                ['Cc:', user.identification],
+                ['Edad:', str(medical_record.user_age) if hasattr(medical_record, 'user_age') and medical_record.user_age else 'No especificada'],
+                ['Diagnóstico:', medical_record.diagnosis if hasattr(medical_record, 'diagnosis') and medical_record.diagnosis else 'No especificado'],
+                ['Sesiones:', str(medical_record.sessions) if hasattr(medical_record, 'sessions') and medical_record.sessions else 'No especificado']
+            ]
+            
+            report_table = Table(report_data, colWidths=[2*inch, 4*inch])
+            report_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
+                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+                ('BACKGROUND', (1, 0), (1, -1), colors.white),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            
+            story.append(report_table)
+            story.append(Spacer(1, 20))
+            
+            # Campo REPORT (contenido del informe final)
+            if hasattr(medical_record, 'report') and medical_record.report:
+                report_title = Paragraph("INFORME:", subtitle_style)
+                story.append(report_title)
+                
+                report_content = Paragraph(medical_record.report, normal_style)
+                story.append(report_content)
+            else:
+                no_report_text = Paragraph("No hay informe registrado para este paciente.", normal_style)
+                story.append(no_report_text)
+                
+        else:
+            no_medical_text = Paragraph("No hay información médica registrada para este paciente.", normal_style)
+            story.append(no_medical_text)
+        
+        # Construir PDF
         doc.build(story)
         
         buffer.seek(0)

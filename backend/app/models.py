@@ -12,6 +12,7 @@ class User(Base):
     gender = Column(String)
     address = Column(String, nullable=True) 
     phone = Column(String, nullable=True) 
+    type = Column(String, nullable=True, default="SOAT")  
 
     # Relationship with MedicalRecord
     medical_record = relationship("MedicalRecord", back_populates="user", uselist=False)
@@ -26,6 +27,7 @@ class MedicalRecord(Base):
     diagnosis = Column(String, nullable=True)
     sessions = Column(Integer, nullable=True)
     consultation_reason = Column(String, nullable=True)
+    report = Column(String, nullable=True)
 
     
     user = relationship("User", back_populates="medical_record")

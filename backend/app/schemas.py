@@ -72,6 +72,7 @@ class MedicalRecordBase(BaseModel):
     diagnosis: Optional[str] = None
     sessions: Optional[int] = None
     consultation_reason: Optional[str] = None
+    report: Optional[str] = None
 
     @field_validator('date', mode='before')
     @classmethod
@@ -104,6 +105,7 @@ class MedicalRecordUpdate(BaseModel):
     diagnosis: Optional[str] = None
     sessions: Optional[int] = None
     consultation_reason: Optional[str] = None
+    report: Optional[str] = None
 
     @field_validator('date', mode='before')
     @classmethod
@@ -143,6 +145,7 @@ class UserBase(BaseModel):
     gender: str
     address: str = None
     phone: str = None
+    type: str = "SOAT"
 
 class UserCreate(UserBase):
     pass
@@ -154,6 +157,7 @@ class UserUpdate(BaseModel):
     gender: Optional[str] = None
     address: Optional[str] = None
     phone: Optional[str] = None
+    type: Optional[str] = "SOAT"
 
 class User(UserBase):
     model_config = ConfigDict(from_attributes=True)
