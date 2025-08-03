@@ -45,10 +45,10 @@ class NumberedCanvas:
         # Header
         if 'header' in self.images_data and self.images_data['header']:
             try:
-                header_width = 500
+                header_width = 410
                 header_height = 80
                 x = (A4[0] - header_width) / 2
-                y = A4[1] - 80  
+                y = A4[1] - 110  
                 canvas.drawImage(self.images_data['header'], x, y, width=header_width, height=header_height)
             except Exception as e:
                 print(f"Error drawing header image: {e}")
@@ -225,6 +225,7 @@ class PDFService:
         
         # Títle
         title = Paragraph("HISTORIA CLÍNICA", title_style)
+        story.append(Spacer(1, 30))
         story.append(title)
         story.append(Spacer(1, 20))
         
@@ -240,7 +241,7 @@ class PDFService:
         
         patient_table = Table(patient_data, colWidths=[2*inch, 4*inch])
         patient_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
+            ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.95, 0.95, 0.95)),
                 ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
                 ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
@@ -270,7 +271,7 @@ class PDFService:
             
             medical_table = Table(medical_data, colWidths=[2*inch, 4*inch])
             medical_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
+                ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.95, 0.95, 0.95)),
                 ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
                 ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
@@ -309,13 +310,10 @@ class PDFService:
         """Genera un informe final PDF para un usuario específico"""
         buffer = BytesIO()
         
-        # Cargar imágenes del backend
         images_data = PDFService.load_pdf_images()
         
-        # Crear documento con template personalizado
         doc = CustomDocTemplate(buffer, images_data, pagesize=A4)
         
-        # Estilos (iguales que generate_user_report)
         styles = getSampleStyleSheet()
         title_style = ParagraphStyle(
             'CustomTitle',
@@ -365,7 +363,7 @@ class PDFService:
             
             report_table = Table(report_data, colWidths=[2*inch, 4*inch])
             report_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
+                ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.95, 0.95, 0.95)),
                 ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
                 ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
