@@ -122,8 +122,8 @@ export const PatientsTable = ({
 	}, [currentPage, patients])
 
 	return (
-		<section className='flex size-full flex-col items-center justify-center'>
-			<div className='h-[90%] w-full overflow-auto rounded-md bg-white shadow-lg'>
+		<section className='flex size-full flex-col items-center'>
+			<div className='h-[90%] min-h-[300px] w-full overflow-auto rounded-md bg-white shadow-lg'>
 				<table className='w-full text-[15px] text-nowrap'>
 					<thead className='sticky top-0'>
 						<tr className='bg-gray-50 px-4 text-left font-medium text-[#111928] *:p-4'>
@@ -177,7 +177,7 @@ export const PatientsTable = ({
 				</table>
 			</div>
 			{totalPages > 1 && (
-				<ul className='mt-5 flex h-12 max-w-[80%] items-center justify-between gap-x-3.5 overflow-x-auto overflow-y-hidden rounded-md bg-white px-4 py-2.5 text-black shadow-lg *:flex *:size-6 *:shrink-0 *:items-center *:justify-center *:rounded *:hover:cursor-pointer'>
+				<ul className='mt-5 flex min-h-12 max-w-[80%] items-center justify-between gap-x-3.5 overflow-x-auto overflow-y-hidden rounded-md bg-white px-4 py-2.5 text-black shadow-lg *:flex *:size-6 *:shrink-0 *:items-center *:justify-center *:rounded *:hover:cursor-pointer'>
 					<li
 						className={`hover:bg-gray-100 ${
 							currentPage === 1 && '!cursor-not-allowed opacity-50'

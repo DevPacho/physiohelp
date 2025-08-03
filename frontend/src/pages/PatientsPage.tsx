@@ -29,7 +29,7 @@ export const PatientsPage = () => {
 	} = useOutletContext<IPatientsPageOutletContext>()
 
 	return (
-		<main className='flex h-full w-full items-center justify-center overflow-hidden p-10'>
+		<main className='flex size-full items-center justify-center overflow-auto p-10'>
 			<PatientsTable
 				{...{
 					patients,
