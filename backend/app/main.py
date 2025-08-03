@@ -2,7 +2,7 @@ from fastapi import Depends, FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from typing import Dict
+from typing import Dict, Optional
 import io
 from io import BytesIO
 
@@ -51,15 +51,15 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(db=db, user=user)
 
 @app.get("/users/", response_model=list[schemas.User], tags=["Users"])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Get all users"""
-    users = crud.get_users(db, offset=skip, limit=limit)
+def read_users(skip: int = 0, limit: int = 100, search: Optional[str] = None, db: Session = Depends(get_db)):
+    """Get all users with optional search filter"""
+    users = crud.get_users(db, offset=skip, limit=limit, search=search)
     return users
 
 @app.get("/users/count", tags=["Users"])
-def get_users_count(db: Session = Depends(get_db)):
-    """Get total count of users"""
-    count = crud.get_users_count(db)
+def get_users_count(search: Optional[str] = None, db: Session = Depends(get_db)):
+    """Get total count of users with optional search filter"""
+    count = crud.get_users_count(db, search=search)
     return {"count": count}
 
 @app.get("/users/{user_id}", response_model=schemas.User, tags=["Users"])
