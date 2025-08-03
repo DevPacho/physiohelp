@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 
 import { getPatients, getPatientsCount } from '@api'
 
@@ -23,6 +23,8 @@ export const usePatients = (): IUsePatientsReturn => {
 	const [currentPage, setCurrentPage] = useState<number>(1)
 	const [isLoading, setIsLoading] = useState<boolean>(false)
 
+	const cachedPatients = useRef<Record<number, IPatient[]>>({})
+
 	const fetchPatientsCount = async () => {
 		getPatientsCount()
 			.then(response => setPatientsCount(response.count))
@@ -34,13 +36,21 @@ export const usePatients = (): IUsePatientsReturn => {
 	}
 
 	const fetchPatients = async () => {
+		if (cachedPatients.current[currentPage]) {
+			setPatients(cachedPatients.current[currentPage])
+			return
+		}
+
 		setIsLoading(true)
 
 		getPatients({
 			skip: (currentPage - 1) * patientsPerPage,
 			limit: patientsPerPage,
 		})
-			.then(response => setPatients(response))
+			.then(response => {
+				cachedPatients.current[currentPage] = response
+				setPatients(response)
+			})
 			.catch(() => toast.error('Ha ocurrido un error al cargar los pacientes'))
 			.finally(() => setIsLoading(false))
 	}
