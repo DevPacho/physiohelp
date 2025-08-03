@@ -1,3 +1,5 @@
+import { PatientsPage } from '@pages'
+
 import { MainLayout } from '@components/layouts'
 import { Navigate, createBrowserRouter } from 'react-router'
 
@@ -10,7 +12,7 @@ export const Router = createBrowserRouter([
 			{
 				index: true,
 				path: 'patients',
-				element: <>Pacientes</>,
+				element: <PatientsPage />,
 			},
 			{
 				path: 'medical-records',

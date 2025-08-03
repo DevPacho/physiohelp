@@ -15,7 +15,7 @@ export const MainNavBar = ({ setShowSidebar }: IMainNavBarProps) => (
 		>
 			<IcMenu className='size-5 fill-black' />
 		</button>
-		<h3 className='text-primary line-clamp-1 text-xl font-semibold'>
+		<h3 className='line-clamp-1 text-xl font-semibold text-black'>
 			Dra. Victoria Eugenia Potes Arana
 		</h3>
 	</header>
