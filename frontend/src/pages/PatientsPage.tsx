@@ -11,8 +11,6 @@ interface IPatientsPageOutletContext {
 	patientsPerPage: number
 	currentPage: number
 	setCurrentPage: Dispatch<SetStateAction<number>>
-	visiblePages: IPatient[]
-	setVisiblePages: Dispatch<SetStateAction<IPatient[]>>
 	isLoading: boolean
 }
 
@@ -23,8 +21,6 @@ export const PatientsPage = () => {
 		patientsPerPage,
 		currentPage,
 		setCurrentPage,
-		visiblePages,
-		setVisiblePages,
 		isLoading,
 	} = useOutletContext<IPatientsPageOutletContext>()
 
@@ -37,8 +33,6 @@ export const PatientsPage = () => {
 					patientsPerPage,
 					currentPage,
 					setCurrentPage,
-					visiblePages,
-					setVisiblePages,
 					isLoading,
 				}}
 			/>

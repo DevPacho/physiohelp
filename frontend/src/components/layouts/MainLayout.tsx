@@ -14,12 +14,9 @@ export const MainLayout = () => {
 	const [patients, setPatients] = useState<IPatient[]>([])
 	const [patientsCount, setPatientsCount] = useState<number | null>(null)
 	const [currentPage, setCurrentPage] = useState<number>(1)
-	const [visiblePages, setVisiblePages] = useState(
-		patients.slice(0, patientsPerPage)
-	)
 
 	const [showSidebar, setShowSidebar] = useState<boolean>(false)
-	const [isLoading, setIsLoading] = useState<boolean>(true)
+	const [isLoading, setIsLoading] = useState<boolean>(false)
 
 	useEffect(() => {
 		getPatientsCount()
@@ -32,11 +29,13 @@ export const MainLayout = () => {
 	}, [])
 
 	useEffect(() => {
+		setIsLoading(true)
+
 		getPatients({
 			skip: (currentPage - 1) * patientsPerPage,
 			limit: patientsPerPage,
 		})
-			.then(response => setVisiblePages(response))
+			.then(response => setPatients(response))
 			.catch(() => toast.error('Ha ocurrido un error al cargar los pacientes'))
 			.finally(() => setIsLoading(false))
 	}, [currentPage])
@@ -65,8 +64,6 @@ export const MainLayout = () => {
 						patientsPerPage,
 						currentPage,
 						setCurrentPage,
-						visiblePages,
-						setVisiblePages,
 						isLoading,
 					}}
 				/>

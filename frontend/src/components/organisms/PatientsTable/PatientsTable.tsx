@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import { Dispatch, SetStateAction } from 'react'
 
 import { IPatient } from '@interfaces'
 
@@ -88,8 +88,6 @@ interface IPatientsTableProps {
 	patientsPerPage: number
 	currentPage: number
 	setCurrentPage: Dispatch<SetStateAction<number>>
-	visiblePages: IPatient[]
-	setVisiblePages: Dispatch<SetStateAction<IPatient[]>>
 	isLoading: boolean
 }
 
@@ -99,27 +97,11 @@ export const PatientsTable = ({
 	patientsPerPage,
 	currentPage,
 	setCurrentPage,
-	visiblePages,
-	setVisiblePages,
 	isLoading,
 }: IPatientsTableProps) => {
-	const [totalPages, setTotalPages] = useState<number>(1)
-
-	useEffect(() => {
-		if (patientsCount) {
-			setTotalPages(Math.ceil(patientsCount / patientsPerPage))
-		}
-	}, [patientsCount])
-
-	useEffect(() => {
-		const startIndexOfCurrentPageSet = (currentPage - 1) * patientsPerPage
-		const endIndexOfCurrentPageSet =
-			startIndexOfCurrentPageSet + patientsPerPage
-
-		setVisiblePages(
-			patients.slice(startIndexOfCurrentPageSet, endIndexOfCurrentPageSet)
-		)
-	}, [currentPage, patients])
+	const totalPages = patientsCount
+		? Math.ceil(patientsCount / patientsPerPage)
+		: 1
 
 	return (
 		<section className='flex size-full flex-col items-center'>
@@ -143,8 +125,8 @@ export const PatientsTable = ({
 									<IcSpinner className='mx-auto size-5 animate-spin fill-black' />
 								</td>
 							</tr>
-						) : visiblePages.length > 0 ? (
-							visiblePages.map((patient, idx) => (
+						) : patients.length > 0 ? (
+							patients.map((patient, idx) => (
 								<tr
 									key={`${patient.id}-${idx}`}
 									className='capitalize *:p-4 hover:bg-gray-100'
