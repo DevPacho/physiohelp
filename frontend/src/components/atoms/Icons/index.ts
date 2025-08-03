@@ -1,3 +1,5 @@
+export { IcChevron } from './IcChevron'
 export { IcMedicalFile } from './IcMedicalFile'
 export { IcMenu } from './IcMenu'
+export { IcSpinner } from './IcSpinner'
 export { IcUser } from './IcUser'
