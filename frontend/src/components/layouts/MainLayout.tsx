@@ -1,10 +1,45 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+
+import { getPatients, getPatientsCount } from '@api'
+
+import { IPatient } from '@interfaces'
 
 import { MainNavBar, MainSideBar } from '@components/organisms'
+import toast from 'react-hot-toast'
 import { Outlet } from 'react-router'
 
+const patientsPerPage = 12
+
 export const MainLayout = () => {
+	const [patients, setPatients] = useState<IPatient[]>([])
+	const [patientsCount, setPatientsCount] = useState<number | null>(null)
+	const [currentPage, setCurrentPage] = useState<number>(1)
+	const [visiblePages, setVisiblePages] = useState(
+		patients.slice(0, patientsPerPage)
+	)
+
 	const [showSidebar, setShowSidebar] = useState<boolean>(false)
+	const [isLoading, setIsLoading] = useState<boolean>(true)
+
+	useEffect(() => {
+		getPatientsCount()
+			.then(response => setPatientsCount(response.count))
+			.catch(() =>
+				toast.error(
+					'Ha ocurrido un error al cargar la cantidad total de pacientes'
+				)
+			)
+	}, [])
+
+	useEffect(() => {
+		getPatients({
+			skip: (currentPage - 1) * patientsPerPage,
+			limit: patientsPerPage,
+		})
+			.then(response => setVisiblePages(response))
+			.catch(() => toast.error('Ha ocurrido un error al cargar los pacientes'))
+			.finally(() => setIsLoading(false))
+	}, [currentPage])
 
 	return (
 		<div className='relative flex h-svh w-svw shrink-0 overflow-hidden bg-[#E4F8FF] xl:h-screen xl:max-h-screen'>
@@ -23,7 +58,18 @@ export const MainLayout = () => {
 				onClick={() => showSidebar && setShowSidebar(false)}
 			>
 				<MainNavBar {...{ setShowSidebar }} />
-				<Outlet />
+				<Outlet
+					context={{
+						patients,
+						patientsCount,
+						patientsPerPage,
+						currentPage,
+						setCurrentPage,
+						visiblePages,
+						setVisiblePages,
+						isLoading,
+					}}
+				/>
 			</section>
 		</div>
 	)
