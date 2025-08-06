@@ -1,8 +1,22 @@
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 
 import { IPatient } from '@interfaces'
 
 import { Button, Input, Select } from '@components/atoms'
+
+const getButtonText = ({
+	type,
+	isLoading,
+}: {
+	type: 'create' | 'edit'
+	isLoading: boolean
+}): string => {
+	if (type === 'create') {
+		return isLoading ? 'Creando Paciente...' : 'Crear Paciente'
+	} else {
+		return isLoading ? 'Actualizando Paciente...' : 'Actualizar Paciente'
+	}
+}
 
 const genderOptions = [
 	{ value: 'M', label: 'Masculino' },
@@ -14,16 +28,24 @@ const agreementOptions = [
 	{ value: 'SOAT', label: 'SOAT' },
 ]
 
-interface ICreatePatientModalProps {
-	isCreatingPatient: boolean
-	createNewPatient: (newPatientData: Omit<IPatient, 'id'>) => Promise<void>
+interface IPatientModalProps {
+	type: 'create' | 'edit'
+	patient?: IPatient
+	isLoading: boolean
+	onSubmit: (
+		patientData:
+			| Omit<IPatient, 'id'>
+			| { patientId: number; patientData: Partial<IPatient> }
+	) => Promise<void>
 }
 
-export const CreatePatientModal = ({
-	isCreatingPatient,
-	createNewPatient,
-}: ICreatePatientModalProps) => {
-	const [newPatientData, setNewPatientData] = useState({
+export const PatientModal = ({
+	type,
+	patient,
+	isLoading,
+	onSubmit,
+}: IPatientModalProps) => {
+	const [patientData, setPatientData] = useState({
 		name: '',
 		last_name: '',
 		identification: '',
@@ -34,56 +56,19 @@ export const CreatePatientModal = ({
 	})
 	const [errors, setErrors] = useState<Record<string, string>>({})
 
-	const validateForm = (): boolean => {
-		const fieldsErrors: Record<string, string> = {}
-
-		if (!newPatientData.name.trim()) {
-			fieldsErrors.name = 'El nombre es requerido.'
-		}
-
-		if (!newPatientData.last_name.trim()) {
-			fieldsErrors.last_name = 'El apellido es requerido.'
-		}
-
-		if (!newPatientData.identification.trim()) {
-			fieldsErrors.identification = 'La identificación es requerida.'
-		}
-
-		if (!newPatientData.gender) {
-			fieldsErrors.gender = 'El género es requerido.'
-		}
-
-		if (!newPatientData.address.trim()) {
-			fieldsErrors.address = 'La dirección es requerida.'
-		}
-
-		if (!newPatientData.phone.trim()) {
-			fieldsErrors.phone = 'El teléfono es requerido.'
-		}
-
-		if (!newPatientData.type) {
-			fieldsErrors.type = 'El tipo de convenio es requerido.'
-		}
-
-		setErrors(fieldsErrors)
-		return Object.keys(fieldsErrors).length === 0
-	}
-
-	const handleSubmit = async (event: FormEvent) => {
-		event.preventDefault()
-
-		if (!validateForm()) return
-
-		createNewPatient({
-			name: newPatientData.name.trim(),
-			last_name: newPatientData.last_name.trim(),
-			identification: newPatientData.identification.trim(),
-			gender: newPatientData.gender,
-			address: newPatientData.address.trim(),
-			phone: newPatientData.phone.trim(),
-			type: newPatientData.type as 'Particular' | 'SOAT',
-		}).then(() => {
-			setNewPatientData({
+	useEffect(() => {
+		if (type === 'edit' && patient) {
+			setPatientData({
+				name: patient.name || '',
+				last_name: patient.last_name || '',
+				identification: patient.identification || '',
+				gender: patient.gender || '',
+				address: patient.address || '',
+				phone: patient.phone || '',
+				type: patient.type || '',
+			})
+		} else if (type === 'create' && !patient) {
+			setPatientData({
 				name: '',
 				last_name: '',
 				identification: '',
@@ -92,18 +77,88 @@ export const CreatePatientModal = ({
 				phone: '',
 				type: '',
 			})
-			setErrors({})
-		})
+		}
+	}, [type, patient])
+
+	const validateForm = (): boolean => {
+		const fieldsErrors: Record<string, string> = {}
+
+		if (!patientData.name.trim()) {
+			fieldsErrors.name = 'El nombre es requerido.'
+		}
+
+		if (!patientData.last_name.trim()) {
+			fieldsErrors.last_name = 'El apellido es requerido.'
+		}
+
+		if (!patientData.identification.trim()) {
+			fieldsErrors.identification = 'La identificación es requerida.'
+		}
+
+		if (!patientData.gender) {
+			fieldsErrors.gender = 'El género es requerido.'
+		}
+
+		if (!patientData.address.trim()) {
+			fieldsErrors.address = 'La dirección es requerida.'
+		}
+
+		if (!patientData.phone.trim()) {
+			fieldsErrors.phone = 'El teléfono es requerido.'
+		}
+
+		if (!patientData.type) {
+			fieldsErrors.type = 'El tipo de convenio es requerido.'
+		}
+
+		setErrors(fieldsErrors)
+		return Object.keys(fieldsErrors).length === 0
 	}
 
 	const handleFieldChange = (field: string, value: string) => {
-		setNewPatientData(prevNewPatientData => ({
-			...prevNewPatientData,
+		setPatientData(prevPatientData => ({
+			...prevPatientData,
 			[field]: value,
 		}))
 
 		if (errors[field]) {
 			setErrors(prevErrors => ({ ...prevErrors, [field]: '' }))
+		}
+	}
+
+	const handleSubmit = async (event: FormEvent) => {
+		event.preventDefault()
+
+		if (!validateForm()) return
+
+		const patientPayload = {
+			name: patientData.name.trim(),
+			last_name: patientData.last_name.trim(),
+			identification: patientData.identification.trim(),
+			gender: patientData.gender,
+			address: patientData.address.trim(),
+			phone: patientData.phone.trim(),
+			type: patientData.type as 'Particular' | 'SOAT',
+		}
+
+		if (type === 'create') {
+			onSubmit(patientPayload).then(() => {
+				setPatientData({
+					name: '',
+					last_name: '',
+					identification: '',
+					gender: '',
+					address: '',
+					phone: '',
+					type: '',
+				})
+				setErrors({})
+			})
+		} else if (type === 'edit' && patient) {
+			onSubmit({
+				patientId: patient.id,
+				patientData: patientPayload,
+			}).then(() => setErrors({}))
 		}
 	}
 
@@ -115,9 +170,9 @@ export const CreatePatientModal = ({
 						type='text'
 						label='Nombre'
 						placeholder='Ingrese el nombre'
-						value={newPatientData.name}
+						value={patientData.name}
 						onChange={value => handleFieldChange('name', value)}
-						disabled={isCreatingPatient}
+						disabled={isLoading}
 						required
 					/>
 					{errors.name && <p className='text-xs text-red-500'>{errors.name}</p>}
@@ -127,9 +182,9 @@ export const CreatePatientModal = ({
 						type='text'
 						label='Apellido'
 						placeholder='Ingrese el apellido'
-						value={newPatientData.last_name}
+						value={patientData.last_name}
 						onChange={value => handleFieldChange('last_name', value)}
-						disabled={isCreatingPatient}
+						disabled={isLoading}
 						required
 					/>
 					{errors.last_name && (
@@ -141,9 +196,9 @@ export const CreatePatientModal = ({
 						type='text'
 						label='Identificación'
 						placeholder='Ingrese la identificación'
-						value={newPatientData.identification}
+						value={patientData.identification}
 						onChange={value => handleFieldChange('identification', value)}
-						disabled={isCreatingPatient}
+						disabled={isLoading}
 						required
 					/>
 					{errors.identification && (
@@ -155,9 +210,9 @@ export const CreatePatientModal = ({
 						label='Género'
 						placeholder='Seleccione el género'
 						options={genderOptions}
-						value={newPatientData.gender}
+						value={patientData.gender}
 						onChange={value => handleFieldChange('gender', value)}
-						disabled={isCreatingPatient}
+						disabled={isLoading}
 						required
 					/>
 					{errors.gender && (
@@ -169,9 +224,9 @@ export const CreatePatientModal = ({
 						type='text'
 						label='Dirección'
 						placeholder='Ingrese la dirección'
-						value={newPatientData.address}
+						value={patientData.address}
 						onChange={value => handleFieldChange('address', value)}
-						disabled={isCreatingPatient}
+						disabled={isLoading}
 						required
 					/>
 					{errors.address && (
@@ -183,9 +238,9 @@ export const CreatePatientModal = ({
 						type='tel'
 						label='Teléfono'
 						placeholder='Ingrese el teléfono'
-						value={newPatientData.phone}
+						value={patientData.phone}
 						onChange={value => handleFieldChange('phone', value)}
-						disabled={isCreatingPatient}
+						disabled={isLoading}
 						required
 					/>
 					{errors.phone && (
@@ -197,9 +252,9 @@ export const CreatePatientModal = ({
 						label='Tipo de Convenio'
 						placeholder='Seleccione el tipo'
 						options={agreementOptions}
-						value={newPatientData.type}
+						value={patientData.type}
 						onChange={value => handleFieldChange('type', value)}
-						disabled={isCreatingPatient}
+						disabled={isLoading}
 						required
 					/>
 					{errors.type && <p className='text-xs text-red-500'>{errors.type}</p>}
@@ -207,9 +262,9 @@ export const CreatePatientModal = ({
 			</div>
 			<footer className='flex justify-end gap-3 pt-4'>
 				<Button
-					text={isCreatingPatient ? 'Creando Paciente...' : 'Crear Paciente'}
+					text={getButtonText({ type, isLoading })}
 					onClick={handleSubmit}
-					disabled={isCreatingPatient}
+					disabled={isLoading}
 				/>
 			</footer>
 		</form>

@@ -1,1 +1,0 @@
-export { CreatePatientModal } from './CreatePatientModal'

@@ -1,4 +1,5 @@
-export * from './CreatePatientModal'
+export * from './DeletePatientModal'
 export * from './MainNavBar'
 export * from './MainSideBar'
+export * from './PatientModal'
 export * from './PatientsTable'
