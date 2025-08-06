@@ -12,6 +12,7 @@ import {
 } from '@components/atoms'
 import { Modal } from '@components/molecules'
 import { DeletePatientModal, PatientModal } from '@components/organisms'
+import { useNavigate } from 'react-router'
 
 export const PatientsTable = () => {
 	const {
@@ -38,6 +39,8 @@ export const PatientsTable = () => {
 		handleDeletePatient,
 		isDeletingPatient,
 	} = usePatients()
+
+	const navigate = useNavigate()
 
 	const totalPages = patientsCount
 		? Math.ceil(patientsCount / patientsPerPage)
@@ -154,8 +157,15 @@ export const PatientsTable = () => {
 									key={`${patient.id}-${idx}`}
 									className='capitalize *:max-w-xs *:truncate *:p-4 hover:bg-gray-100'
 								>
-									<td className='cursor-pointer hover:underline'>
-										{patient.name || '----'} {patient.last_name || '----'}
+									<td>
+										<button
+											type='button'
+											title='Ver los detalles del paciente'
+											className='cursor-pointer hover:underline'
+											onClick={() => navigate(`/patients/${patient.id}`)}
+										>
+											{patient.name || '----'} {patient.last_name || '----'}
+										</button>
 									</td>
 									<td>{patient.identification || '----'}</td>
 									<td>
