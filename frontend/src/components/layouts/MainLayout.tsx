@@ -13,7 +13,7 @@ export const MainLayout = () => {
 				<button
 					type='button'
 					onClick={() => setShowSidebar(false)}
-					className='text-primary absolute top-4 right-4 z-10 cursor-pointer text-3xl font-semibold xl:hidden'
+					className='text-black absolute top-4 right-4 z-10 cursor-pointer text-3xl font-semibold xl:hidden'
 				>
 					X
 				</button>
