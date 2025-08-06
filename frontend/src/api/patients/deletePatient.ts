@@ -7,5 +7,5 @@ interface IDeletePatientParams {
 export const deletePatient = async ({
 	patientId,
 }: IDeletePatientParams): Promise<void> => {
-	await apiPublic.delete(`/users/${patientId}/`)
+	await apiPublic.delete(`/users/${patientId}`)
 }
