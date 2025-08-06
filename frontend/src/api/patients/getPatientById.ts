@@ -9,7 +9,7 @@ interface IGetPatientByIdParams {
 export const getPatientById = async ({
 	patientId,
 }: IGetPatientByIdParams): Promise<IPatient> => {
-	const { data } = await apiPublic.get(`/users/${patientId}/`)
+	const { data } = await apiPublic.get(`/users/${patientId}`)
 
 	return data
 }
