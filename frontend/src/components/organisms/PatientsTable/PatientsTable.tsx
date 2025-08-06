@@ -167,7 +167,19 @@ export const PatientsTable = () => {
 									</td>
 									<td>{patient.address || '----'}</td>
 									<td>{patient.phone || '----'}</td>
-									<td>{patient.type || '----'}</td>
+									<td>
+										<span
+											className={`rounded-full px-3 py-1 text-sm ${
+												patient.type === 'Particular'
+													? 'text-primary-light bg-blue-100'
+													: patient.type === 'SOAT'
+														? 'bg-red-100 text-red-600'
+														: ''
+											}`}
+										>
+											{patient.type || '----'}
+										</span>
+									</td>
 									<td className='flex items-center gap-3 *:cursor-pointer'>
 										<button
 											type='button'
