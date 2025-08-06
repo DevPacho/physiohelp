@@ -1,6 +1,8 @@
 import { usePagination, usePatients } from '@hooks'
 
-import { IcChevron, IcSpinner } from '@components/atoms'
+import { Button, IcChevron, IcSpinner } from '@components/atoms'
+import { Modal } from '@components/molecules'
+import { CreatePatientModal } from '@components/organisms'
 
 export const PatientsTable = () => {
 	const {
@@ -10,6 +12,10 @@ export const PatientsTable = () => {
 		currentPage,
 		setCurrentPage,
 		isLoading,
+		isCreatePatientModalOpen,
+		setIsCreatePatientModalOpen,
+		createNewPatient,
+		isCreatingPatient,
 	} = usePatients()
 
 	const totalPages = patientsCount
@@ -28,7 +34,30 @@ export const PatientsTable = () => {
 	})
 
 	return (
-		<section className='flex size-full flex-col items-center'>
+		<section className='flex size-full flex-col items-center gap-5'>
+			<header className='flex w-full items-center justify-between'>
+				<h2 className='line-clamp-1 text-xl font-semibold text-black'>
+					Gestión de Pacientes / Historias Clínicas
+				</h2>
+				<Button
+					text='Nuevo Paciente'
+					onClick={() => setIsCreatePatientModalOpen(true)}
+				/>
+				<Modal
+					title='Nuevo Paciente'
+					subtitle='Diligencia todos los campos para crear un nuevo paciente.'
+					isOpen={isCreatePatientModalOpen}
+					onClose={() => setIsCreatePatientModalOpen(false)}
+					modalContentClassName='w-full xl:min-w-[700px] xl:min-h-[300px] xl:w-fit'
+				>
+					<CreatePatientModal
+						{...{
+							isCreatingPatient,
+							createNewPatient,
+						}}
+					/>
+				</Modal>
+			</header>
 			<div className='h-[90%] min-h-[300px] w-full overflow-auto rounded-md bg-white shadow-lg'>
 				<table className='w-full text-[15px] text-nowrap'>
 					<thead className='sticky top-0'>
@@ -83,7 +112,7 @@ export const PatientsTable = () => {
 				</table>
 			</div>
 			{totalPages > 1 && (
-				<ul className='mt-5 flex min-h-12 max-w-[80%] items-center justify-between gap-x-3.5 overflow-x-auto overflow-y-hidden rounded-md bg-white px-4 py-2.5 text-black shadow-lg *:flex *:size-6 *:shrink-0 *:items-center *:justify-center *:rounded *:hover:cursor-pointer'>
+				<ul className='flex min-h-12 max-w-[80%] items-center justify-between gap-x-3.5 overflow-x-auto overflow-y-hidden rounded-md bg-white px-4 py-2.5 text-black shadow-lg *:flex *:size-6 *:shrink-0 *:items-center *:justify-center *:rounded *:hover:cursor-pointer'>
 					<li
 						className={`hover:bg-gray-100 ${
 							!canGoPreviousPage && '!cursor-not-allowed opacity-50'

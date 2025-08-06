@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 
-import { getPatients, getPatientsCount } from '@api'
+import { createPatient, getPatients, getPatientsCount } from '@api'
 
 import { IPatient } from '@interfaces'
 
@@ -10,11 +10,16 @@ const patientsPerPage = 12
 
 interface IUsePatientsReturn {
 	patients: IPatient[]
+	setPatients: Dispatch<SetStateAction<IPatient[]>>
 	patientsCount: number | null
 	patientsPerPage: number
 	currentPage: number
 	setCurrentPage: Dispatch<SetStateAction<number>>
 	isLoading: boolean
+	isCreatePatientModalOpen: boolean
+	setIsCreatePatientModalOpen: Dispatch<SetStateAction<boolean>>
+	createNewPatient: (newPatientData: Omit<IPatient, 'id'>) => Promise<void>
+	isCreatingPatient: boolean
 }
 
 export const usePatients = (): IUsePatientsReturn => {
@@ -22,6 +27,9 @@ export const usePatients = (): IUsePatientsReturn => {
 	const [patientsCount, setPatientsCount] = useState<number | null>(null)
 	const [currentPage, setCurrentPage] = useState<number>(1)
 	const [isLoading, setIsLoading] = useState<boolean>(false)
+	const [isCreatingPatient, setIsCreatingPatient] = useState<boolean>(false)
+	const [isCreatePatientModalOpen, setIsCreatePatientModalOpen] =
+		useState<boolean>(false)
 
 	const cachedPatients = useRef<Record<number, IPatient[]>>({})
 
@@ -55,6 +63,34 @@ export const usePatients = (): IUsePatientsReturn => {
 			.finally(() => setIsLoading(false))
 	}
 
+	const createNewPatient = async (patientData: Omit<IPatient, 'id'>) => {
+		setIsCreatingPatient(true)
+
+		createPatient({
+			patientData: patientData as IPatient,
+		})
+			.then(response => {
+				setPatients(prevPatients => [response, ...prevPatients])
+				setPatientsCount(prevPatientsCount =>
+					prevPatientsCount ? prevPatientsCount + 1 : 1
+				)
+				cachedPatients.current = {}
+
+				if (currentPage !== 1) {
+					setCurrentPage(1)
+				}
+			})
+			.then(() => {
+				setIsCreatePatientModalOpen(false)
+				toast.success('Paciente creado exitosamente')
+			})
+			.catch(error => {
+				toast.error('Ha ocurrido un error al crear el paciente')
+				throw error
+			})
+			.finally(() => setIsCreatingPatient(false))
+	}
+
 	useEffect(() => {
 		fetchPatientsCount()
 	}, [])
@@ -65,10 +101,15 @@ export const usePatients = (): IUsePatientsReturn => {
 
 	return {
 		patients,
+		setPatients,
 		patientsCount,
-		currentPage,
 		patientsPerPage,
-		isLoading,
+		currentPage,
 		setCurrentPage,
+		isLoading,
+		isCreatePatientModalOpen,
+		setIsCreatePatientModalOpen,
+		createNewPatient,
+		isCreatingPatient,
 	}
 }
