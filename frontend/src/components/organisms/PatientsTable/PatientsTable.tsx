@@ -1,8 +1,17 @@
 import { usePagination, usePatients } from '@hooks'
 
-import { Button, IcChevron, IcSpinner, Input } from '@components/atoms'
+import { IPatient } from '@interfaces'
+
+import {
+	Button,
+	IcChevron,
+	IcPencil,
+	IcSpinner,
+	IcTrash,
+	Input,
+} from '@components/atoms'
 import { Modal } from '@components/molecules'
-import { CreatePatientModal } from '@components/organisms'
+import { DeletePatientModal, PatientModal } from '@components/organisms'
 
 export const PatientsTable = () => {
 	const {
@@ -14,10 +23,20 @@ export const PatientsTable = () => {
 		currentPage,
 		setCurrentPage,
 		isLoading,
-		isCreatePatientModalOpen,
-		setIsCreatePatientModalOpen,
-		createNewPatient,
-		isCreatingPatient,
+		isPatientModalOpen,
+		setIsPatientModalOpen,
+		patientModalType,
+		setPatientModalType,
+		selectedPatient,
+		setSelectedPatient,
+		handlePatientSubmit,
+		isPatientModalLoading,
+		isDeletePatientModalOpen,
+		setIsDeletePatientModalOpen,
+		selectedPatientToDelete,
+		setSelectedPatientToDelete,
+		handleDeletePatient,
+		isDeletingPatient,
 	} = usePatients()
 
 	const totalPages = patientsCount
@@ -35,6 +54,23 @@ export const PatientsTable = () => {
 		totalPages,
 	})
 
+	const handleCreatePatient = () => {
+		setSelectedPatient(null)
+		setPatientModalType('create')
+		setIsPatientModalOpen(true)
+	}
+
+	const handleSelectPatientToUpdate = (patient: IPatient) => {
+		setSelectedPatient(patient)
+		setPatientModalType('edit')
+		setIsPatientModalOpen(true)
+	}
+
+	const handleSelectPatientToDelete = (patient: IPatient) => {
+		setSelectedPatientToDelete(patient)
+		setIsDeletePatientModalOpen(true)
+	}
+
 	return (
 		<section className='flex size-full flex-col items-center gap-5'>
 			<header className='flex w-full flex-col justify-between gap-3 md:flex-row md:items-center'>
@@ -48,25 +84,49 @@ export const PatientsTable = () => {
 						value={patientToSearch}
 						onChange={setPatientToSearch}
 					/>
-					<Button
-						text='Nuevo Paciente'
-						onClick={() => setIsCreatePatientModalOpen(true)}
-					/>
+					<Button text='Nuevo Paciente' onClick={handleCreatePatient} />
 				</div>
 				<Modal
-					title='Nuevo Paciente'
-					subtitle='Diligencia todos los campos para crear un nuevo paciente.'
-					isOpen={isCreatePatientModalOpen}
-					onClose={() => setIsCreatePatientModalOpen(false)}
+					title={
+						patientModalType === 'create' ? 'Nuevo Paciente' : 'Editar Paciente'
+					}
+					subtitle={
+						patientModalType === 'create'
+							? 'Diligencia todos los campos para crear un nuevo paciente.'
+							: 'Modifica los campos necesarios para actualizar la información del paciente.'
+					}
+					isOpen={isPatientModalOpen}
+					onClose={() => {
+						setIsPatientModalOpen(false)
+						setSelectedPatient(null)
+					}}
 					modalContentClassName='w-full xl:min-w-[700px] xl:min-h-[300px] xl:w-fit'
 				>
-					<CreatePatientModal
-						{...{
-							isCreatingPatient,
-							createNewPatient,
-						}}
+					<PatientModal
+						type={patientModalType}
+						patient={selectedPatient || undefined}
+						isLoading={isPatientModalLoading}
+						onSubmit={handlePatientSubmit}
 					/>
 				</Modal>
+				{selectedPatientToDelete && (
+					<Modal
+						title='Eliminar Paciente'
+						subtitle='Confirma la eliminación del paciente seleccionado.'
+						isOpen={isDeletePatientModalOpen}
+						onClose={() => {
+							setIsDeletePatientModalOpen(false)
+							setSelectedPatientToDelete(null)
+						}}
+						modalContentClassName='w-full xl:min-w-[700px] xl:w-fit'
+					>
+						<DeletePatientModal
+							patient={selectedPatientToDelete}
+							isDeletingPatient={isDeletingPatient}
+							deletePatient={handleDeletePatient}
+						/>
+					</Modal>
+				)}
 			</header>
 			<div className='h-[90%] min-h-[300px] w-full overflow-auto rounded-md bg-white shadow-lg'>
 				<table className='w-full text-[15px] text-nowrap'>
@@ -77,7 +137,7 @@ export const PatientsTable = () => {
 							<th>Género</th>
 							<th>Dirección</th>
 							<th>Teléfono</th>
-							<th>Convenio</th>
+							<th>Tipo de Convenio</th>
 							<th className='rounded-tr-md'>Acciones</th>
 						</tr>
 					</thead>
@@ -108,7 +168,22 @@ export const PatientsTable = () => {
 									<td>{patient.address || '----'}</td>
 									<td>{patient.phone || '----'}</td>
 									<td>{patient.type || '----'}</td>
-									<td></td>
+									<td className='flex items-center gap-3 *:cursor-pointer'>
+										<button
+											type='button'
+											title='Editar paciente'
+											onClick={() => handleSelectPatientToUpdate(patient)}
+										>
+											<IcPencil className='size-5 fill-black' />
+										</button>
+										<button
+											type='button'
+											title='Eliminar paciente'
+											onClick={() => handleSelectPatientToDelete(patient)}
+										>
+											<IcTrash className='size-4.5 fill-black hover:fill-red-500' />
+										</button>
+									</td>
 								</tr>
 							))
 						) : (

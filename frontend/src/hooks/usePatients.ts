@@ -1,6 +1,12 @@
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 
-import { createPatient, getPatients, getPatientsCount } from '@api'
+import {
+	createPatient,
+	deletePatient,
+	getPatients,
+	getPatientsCount,
+	updatePatient,
+} from '@api'
 
 import { IPatient } from '@interfaces'
 
@@ -19,10 +25,24 @@ interface IUsePatientsReturn {
 	currentPage: number
 	setCurrentPage: Dispatch<SetStateAction<number>>
 	isLoading: boolean
-	isCreatePatientModalOpen: boolean
-	setIsCreatePatientModalOpen: Dispatch<SetStateAction<boolean>>
-	createNewPatient: (newPatientData: Omit<IPatient, 'id'>) => Promise<void>
-	isCreatingPatient: boolean
+	isPatientModalOpen: boolean
+	setIsPatientModalOpen: Dispatch<SetStateAction<boolean>>
+	patientModalType: 'create' | 'edit'
+	setPatientModalType: Dispatch<SetStateAction<'create' | 'edit'>>
+	selectedPatient: IPatient | null
+	setSelectedPatient: Dispatch<SetStateAction<IPatient | null>>
+	handlePatientSubmit: (
+		data:
+			| Omit<IPatient, 'id'>
+			| { patientId: number; patientData: Partial<IPatient> }
+	) => Promise<void>
+	isPatientModalLoading: boolean
+	isDeletePatientModalOpen: boolean
+	setIsDeletePatientModalOpen: Dispatch<SetStateAction<boolean>>
+	selectedPatientToDelete: IPatient | null
+	setSelectedPatientToDelete: Dispatch<SetStateAction<IPatient | null>>
+	handleDeletePatient: (patientId: number) => Promise<void>
+	isDeletingPatient: boolean
 }
 
 export const usePatients = (): IUsePatientsReturn => {
@@ -33,9 +53,18 @@ export const usePatients = (): IUsePatientsReturn => {
 		useState<string>('')
 	const [currentPage, setCurrentPage] = useState<number>(1)
 	const [isLoading, setIsLoading] = useState<boolean>(false)
-	const [isCreatingPatient, setIsCreatingPatient] = useState<boolean>(false)
-	const [isCreatePatientModalOpen, setIsCreatePatientModalOpen] =
+	const [isPatientModalOpen, setIsPatientModalOpen] = useState<boolean>(false)
+	const [patientModalType, setPatientModalType] = useState<'create' | 'edit'>(
+		'create'
+	)
+	const [selectedPatient, setSelectedPatient] = useState<IPatient | null>(null)
+	const [isPatientModalLoading, setIsPatientModalLoading] =
 		useState<boolean>(false)
+	const [isDeletePatientModalOpen, setIsDeletePatientModalOpen] =
+		useState<boolean>(false)
+	const [selectedPatientToDelete, setSelectedPatientToDelete] =
+		useState<IPatient | null>(null)
+	const [isDeletingPatient, setIsDeletingPatient] = useState<boolean>(false)
 
 	const cachedPatients = useRef<Record<string, IPatient[]>>({})
 
@@ -49,7 +78,7 @@ export const usePatients = (): IUsePatientsReturn => {
 			)
 	}
 
-	const fetchPatients = async () => {
+	const fetchPatients = () => {
 		const cacheKey = `${currentPage}-${debouncedPatientToSearch}`
 
 		if (cachedPatients.current[cacheKey]) {
@@ -72,32 +101,94 @@ export const usePatients = (): IUsePatientsReturn => {
 			.finally(() => setIsLoading(false))
 	}
 
-	const createNewPatient = async (patientData: Omit<IPatient, 'id'>) => {
-		setIsCreatingPatient(true)
+	const handlePatientSubmit = async (
+		data:
+			| Omit<IPatient, 'id'>
+			| { patientId: number; patientData: Partial<IPatient> }
+	) => {
+		setIsPatientModalLoading(true)
 
-		createPatient({
-			patientData: patientData as IPatient,
+		if ('patientId' in data) {
+			updatePatient({
+				patientId: data.patientId,
+				patientData: data.patientData,
+			})
+				.then(response => {
+					setPatients(prevPatients =>
+						prevPatients.map(patient =>
+							patient.id === data.patientId ? response : patient
+						)
+					)
+					cachedPatients.current = {}
+
+					setIsPatientModalOpen(false)
+					setSelectedPatient(null)
+					toast.success('Paciente actualizado exitosamente')
+				})
+				.catch(error => {
+					toast.error('Ha ocurrido un error al actualizar el paciente')
+					throw error
+				})
+				.finally(() => setIsPatientModalLoading(false))
+		} else {
+			createPatient({
+				patientData: data as IPatient,
+			})
+				.then(response => {
+					setPatients(prevPatients => [response, ...prevPatients])
+					setPatientsCount(prevPatientsCount =>
+						prevPatientsCount ? prevPatientsCount + 1 : 1
+					)
+					cachedPatients.current = {}
+
+					if (currentPage !== 1) {
+						setCurrentPage(1)
+					}
+
+					setIsPatientModalOpen(false)
+					toast.success('Paciente creado exitosamente')
+				})
+				.catch(error => {
+					toast.error('Ha ocurrido un error al crear el paciente')
+					throw error
+				})
+				.finally(() => setIsPatientModalLoading(false))
+		}
+	}
+
+	const handleDeletePatient = async (patientId: number) => {
+		setIsDeletingPatient(true)
+
+		deletePatient({
+			patientId,
 		})
-			.then(response => {
-				setPatients(prevPatients => [response, ...prevPatients])
+			.then(() => {
+				setPatients(prevPatients =>
+					prevPatients.filter(patient => patient.id !== patientId)
+				)
 				setPatientsCount(prevPatientsCount =>
-					prevPatientsCount ? prevPatientsCount + 1 : 1
+					prevPatientsCount ? prevPatientsCount - 1 : 0
 				)
 				cachedPatients.current = {}
 
-				if (currentPage !== 1) {
-					setCurrentPage(1)
+				const remainingPatients = patients.filter(
+					patient => patient.id !== patientId
+				)
+
+				if (remainingPatients.length === 0 && currentPage > 1) {
+					setCurrentPage(currentPage - 1)
 				}
 			})
 			.then(() => {
-				setIsCreatePatientModalOpen(false)
-				toast.success('Paciente creado exitosamente')
+				setIsDeletePatientModalOpen(false)
+				setSelectedPatientToDelete(null)
+				toast.success('Paciente eliminado exitosamente')
 			})
 			.catch(error => {
-				toast.error('Ha ocurrido un error al crear el paciente')
+				toast.error('Ha ocurrido un error al eliminar el paciente')
 				throw error
 			})
-			.finally(() => setIsCreatingPatient(false))
+			.finally(() => setIsDeletingPatient(false))
 	}
 
 	useEffect(() => {
@@ -136,9 +227,19 @@ export const usePatients = (): IUsePatientsReturn => {
 		currentPage,
 		setCurrentPage,
 		isLoading,
-		isCreatePatientModalOpen,
-		setIsCreatePatientModalOpen,
-		createNewPatient,
-		isCreatingPatient,
+		isPatientModalOpen,
+		setIsPatientModalOpen,
+		patientModalType,
+		setPatientModalType,
+		selectedPatient,
+		setSelectedPatient,
+		handlePatientSubmit,
+		isPatientModalLoading,
+		isDeletePatientModalOpen,
+		setIsDeletePatientModalOpen,
+		selectedPatientToDelete,
+		setSelectedPatientToDelete,
+		handleDeletePatient,
+		isDeletingPatient,
 	}
 }
