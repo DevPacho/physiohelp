@@ -28,7 +28,7 @@ export const Select = ({
 			{required && <span className='ml-1 text-red-500'>*</span>}
 		</label>
 		<select
-			className='focus:border-primary-light focus:primary-light w-full rounded-md border border-gray-300 p-2 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+			className='focus:border-primary-light focus:primary-light min-w-full rounded-md border border-gray-300 p-2 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
 			value={value}
 			onChange={event => onChange(event.target.value)}
 			disabled={disabled}
