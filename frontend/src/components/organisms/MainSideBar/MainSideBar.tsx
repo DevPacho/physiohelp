@@ -39,8 +39,8 @@ export const MainSideBar = ({
 			<nav className='flex h-full w-full flex-col text-white *:flex *:h-14 *:items-center *:gap-3 xl:text-lg'>
 				<Link
 					to='/patients'
-					className={`group px-10 hover:bg-[#20499C] ${
-						activeTab === 'patients' && 'bg-[#20499C]'
+					className={`group hover:bg-primary-light px-10 ${
+						activeTab === 'patients' && 'bg-primary-light'
 					}`}
 				>
 					<IcUser className='size-5 fill-white' />
@@ -48,8 +48,8 @@ export const MainSideBar = ({
 				</Link>
 				<Link
 					to='/medical-records'
-					className={`group px-10 hover:bg-[#20499C] ${
-						activeTab === 'medical-records' && 'bg-[#20499C]'
+					className={`group hover:bg-primary-light px-10 ${
+						activeTab === 'medical-records' && 'bg-primary-light'
 					}`}
 				>
 					<IcMedicalFile className='size-5 fill-white' />
