@@ -1,4 +1,4 @@
-import { PatientsPage } from '@pages'
+import { PatientDetailsPage, PatientsPage } from '@pages'
 
 import { MainLayout } from '@components/layouts'
 import { Navigate, createBrowserRouter } from 'react-router'
@@ -15,8 +15,8 @@ export const Router = createBrowserRouter([
 				element: <PatientsPage />,
 			},
 			{
-				path: 'medical-records',
-				element: <>Historias Clínicas</>,
+				path: 'patients/:patientId',
+				element: <PatientDetailsPage />,
 			},
 			{
 				path: '/',
