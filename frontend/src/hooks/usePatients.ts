@@ -7,12 +7,15 @@ import { IPatient } from '@interfaces'
 import toast from 'react-hot-toast'
 
 const patientsPerPage = 12
+const searchDelay = 500
 
 interface IUsePatientsReturn {
 	patients: IPatient[]
 	setPatients: Dispatch<SetStateAction<IPatient[]>>
 	patientsCount: number | null
 	patientsPerPage: number
+	patientToSearch: string
+	setPatientToSearch: Dispatch<SetStateAction<string>>
 	currentPage: number
 	setCurrentPage: Dispatch<SetStateAction<number>>
 	isLoading: boolean
@@ -25,16 +28,19 @@ interface IUsePatientsReturn {
 export const usePatients = (): IUsePatientsReturn => {
 	const [patients, setPatients] = useState<IPatient[]>([])
 	const [patientsCount, setPatientsCount] = useState<number | null>(null)
+	const [patientToSearch, setPatientToSearch] = useState<string>('')
+	const [debouncedPatientToSearch, setDebouncedPatientToSearch] =
+		useState<string>('')
 	const [currentPage, setCurrentPage] = useState<number>(1)
 	const [isLoading, setIsLoading] = useState<boolean>(false)
 	const [isCreatingPatient, setIsCreatingPatient] = useState<boolean>(false)
 	const [isCreatePatientModalOpen, setIsCreatePatientModalOpen] =
 		useState<boolean>(false)
 
-	const cachedPatients = useRef<Record<number, IPatient[]>>({})
+	const cachedPatients = useRef<Record<string, IPatient[]>>({})
 
 	const fetchPatientsCount = async () => {
-		getPatientsCount()
+		getPatientsCount({ search: debouncedPatientToSearch })
 			.then(response => setPatientsCount(response.count))
 			.catch(() =>
 				toast.error(
@@ -44,8 +50,10 @@ export const usePatients = (): IUsePatientsReturn => {
 	}
 
 	const fetchPatients = async () => {
-		if (cachedPatients.current[currentPage]) {
-			setPatients(cachedPatients.current[currentPage])
+		const cacheKey = `${currentPage}-${debouncedPatientToSearch}`
+
+		if (cachedPatients.current[cacheKey]) {
+			setPatients(cachedPatients.current[cacheKey])
 			return
 		}
 
@@ -54,9 +62,10 @@ export const usePatients = (): IUsePatientsReturn => {
 		getPatients({
 			skip: (currentPage - 1) * patientsPerPage,
 			limit: patientsPerPage,
+			search: debouncedPatientToSearch,
 		})
 			.then(response => {
-				cachedPatients.current[currentPage] = response
+				cachedPatients.current[cacheKey] = response
 				setPatients(response)
 			})
 			.catch(() => toast.error('Ha ocurrido un error al cargar los pacientes'))
@@ -92,18 +101,38 @@ export const usePatients = (): IUsePatientsReturn => {
 	}
 
 	useEffect(() => {
+		setIsLoading(true)
+
+		const delay = setTimeout(() => {
+			setDebouncedPatientToSearch(patientToSearch)
+
+			if (patientToSearch !== debouncedPatientToSearch) {
+				setCurrentPage(1)
+				cachedPatients.current = {}
+			}
+		}, searchDelay)
+
+		return () => {
+			clearTimeout(delay)
+			setIsLoading(false)
+		}
+	}, [patientToSearch])
+
+	useEffect(() => {
 		fetchPatientsCount()
-	}, [])
+	}, [debouncedPatientToSearch])
 
 	useEffect(() => {
 		fetchPatients()
-	}, [currentPage])
+	}, [currentPage, debouncedPatientToSearch])
 
 	return {
 		patients,
 		setPatients,
 		patientsCount,
 		patientsPerPage,
+		patientToSearch,
+		setPatientToSearch,
 		currentPage,
 		setCurrentPage,
 		isLoading,
