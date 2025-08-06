@@ -92,7 +92,7 @@ export const PatientsTable = () => {
 							patients.map((patient, idx) => (
 								<tr
 									key={`${patient.id}-${idx}`}
-									className='capitalize *:p-4 hover:bg-gray-100'
+									className='capitalize *:max-w-xs *:truncate *:p-4 hover:bg-gray-100'
 								>
 									<td className='cursor-pointer hover:underline'>
 										{patient.name || '----'} {patient.last_name || '----'}
