@@ -1,6 +1,6 @@
 import { usePagination, usePatients } from '@hooks'
 
-import { Button, IcChevron, IcSpinner } from '@components/atoms'
+import { Button, IcChevron, IcSpinner, Input } from '@components/atoms'
 import { Modal } from '@components/molecules'
 import { CreatePatientModal } from '@components/organisms'
 
@@ -9,6 +9,8 @@ export const PatientsTable = () => {
 		patients,
 		patientsCount,
 		patientsPerPage,
+		patientToSearch,
+		setPatientToSearch,
 		currentPage,
 		setCurrentPage,
 		isLoading,
@@ -35,14 +37,22 @@ export const PatientsTable = () => {
 
 	return (
 		<section className='flex size-full flex-col items-center gap-5'>
-			<header className='flex w-full items-center justify-between'>
-				<h2 className='line-clamp-1 text-xl font-semibold text-black'>
-					Gestión de Pacientes / Historias Clínicas
+			<header className='flex w-full flex-col justify-between gap-3 md:flex-row md:items-center'>
+				<h2 className='min-w-fit text-xl font-semibold text-black'>
+					Gestión de Pacientes
 				</h2>
-				<Button
-					text='Nuevo Paciente'
-					onClick={() => setIsCreatePatientModalOpen(true)}
-				/>
+				<div className='flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:justify-end'>
+					<Input
+						type='text'
+						placeholder='Buscar pacientes...'
+						value={patientToSearch}
+						onChange={setPatientToSearch}
+					/>
+					<Button
+						text='Nuevo Paciente'
+						onClick={() => setIsCreatePatientModalOpen(true)}
+					/>
+				</div>
 				<Modal
 					title='Nuevo Paciente'
 					subtitle='Diligencia todos los campos para crear un nuevo paciente.'
