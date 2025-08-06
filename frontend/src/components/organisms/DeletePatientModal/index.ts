@@ -1,0 +1,1 @@
+export { DeletePatientModal } from './DeletePatientModal'
