@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from 'react'
 
 import { PhysioHelpLogo } from '@assets'
 
-import { IcMedicalFile, IcUser } from '@components/atoms'
+import { IcUser } from '@components/atoms'
 import { Link, useLocation } from 'react-router'
 
 interface IMainSideBarProps {
@@ -45,17 +45,6 @@ export const MainSideBar = ({
 				>
 					<IcUser className='size-5 fill-white' />
 					<p className='line-clamp-1 group-hover:underline'>Pacientes</p>
-				</Link>
-				<Link
-					to='/medical-records'
-					className={`group hover:bg-primary-light px-10 ${
-						activeTab === 'medical-records' && 'bg-primary-light'
-					}`}
-				>
-					<IcMedicalFile className='size-5 fill-white' />
-					<p className='line-clamp-1 group-hover:underline'>
-						Historias Clínicas
-					</p>
 				</Link>
 			</nav>
 		</aside>
