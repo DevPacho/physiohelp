@@ -4,7 +4,7 @@ import { apiPublic } from '../config'
 
 interface ICreateEvolutionParams {
 	medicalRecordId: number
-	evolutionData: IEvolution
+	evolutionData: Partial<IEvolution>
 }
 
 export const createEvolution = async ({
