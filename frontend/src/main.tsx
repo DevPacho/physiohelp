@@ -12,7 +12,7 @@ createRoot(document.getElementById('root')!).render(
 	<StrictMode>
 		<RouterProvider router={Router} />
 		<Toaster
-			position='top-right'
+			position='top-center'
 			reverseOrder={false}
 			toastOptions={{
 				success: { duration: 5000 },
