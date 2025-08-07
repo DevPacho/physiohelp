@@ -4,7 +4,7 @@ import { apiPublic } from '../config'
 
 interface ICreateMedicalRecordParams {
 	patientIdentification: string
-	medicalRecordData: IMedicalRecord
+	medicalRecordData: Partial<IMedicalRecord>
 }
 
 export const createMedicalRecord = async ({
