@@ -16,15 +16,13 @@ export const DeletePatientModal = ({
 	const handleDelete = () => deletePatient(patient.id)
 
 	return (
-		<div className='mt-5'>
-			<p className='text-sm'>
+		<div className='mt-5 text-sm text-black'>
+			<p>
 				¿Está segura de que desea eliminar a{' '}
 				<span className='font-semibold text-black capitalize'>
 					{patient.name} {patient.last_name}
 				</span>{' '}
-				como paciente?
-			</p>
-			<p className='text-sm'>
+				como paciente? <br />
 				Esta acción no se puede deshacer. Se eliminarán todos sus datos
 				asociados.
 			</p>

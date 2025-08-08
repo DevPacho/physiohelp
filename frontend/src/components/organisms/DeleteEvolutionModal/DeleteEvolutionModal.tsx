@@ -16,15 +16,13 @@ export const DeleteEvolutionModal = ({
 	const handleDelete = () => deleteEvolution(evolution.id)
 
 	return (
-		<div className='mt-5'>
-			<p className='text-sm'>
+		<div className='mt-5 text-sm text-black'>
+			<p>
 				¿Está segura de que desea eliminar la evolución del{' '}
 				<span className='font-semibold text-black'>
-					{new Date(evolution.date).toLocaleDateString('es-ES')}
+					{evolution.date.split('-').reverse().join('/')}
 				</span>
-				?
-			</p>
-			<p className='mt-2 text-sm'>
+				? <br />
 				Esta acción no se puede deshacer. Se eliminarán todas las observaciones
 				asociadas a esta evolución.
 			</p>
