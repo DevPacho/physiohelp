@@ -33,8 +33,8 @@ export const PatientMedicalRecordTab = ({
 			</div>
 		) : currentMedicalRecord ? (
 			<div className='flex flex-col gap-4'>
-				<div>
-					<div className='flex items-center justify-between gap-2'>
+				<div className='flex flex-col gap-2 sm:gap-0'>
+					<div className='flex flex-col justify-between gap-2 sm:flex-row sm:items-center'>
 						<h2 className='min-w-fit text-xl font-semibold text-black'>
 							{currentPatient.type === 'SOAT'
 								? 'Historia Clínica'
@@ -70,11 +70,7 @@ export const PatientMedicalRecordTab = ({
 						<label className='text-sm font-medium text-black'>Fecha</label>
 						<p className='text-sm text-black'>
 							{currentMedicalRecord.date
-								? currentMedicalRecord.date
-										.split('T')[0]
-										.split('-')
-										.reverse()
-										.join('/')
+								? currentMedicalRecord.date.split('-').reverse().join('/')
 								: '----'}
 						</p>
 					</fieldset>
@@ -148,8 +144,7 @@ export const PatientMedicalRecordTab = ({
 						<MedicalRecordModal
 							patient={currentPatient}
 							medicalRecord={currentMedicalRecord}
-							onSubmit={handleCreateOrUpdateMedicalRecord}
-							onCancel={() => setShowMedicalRecordModal(false)}
+							onSubmit={handleCreateOrUpdateMedicalRecord}	
 							isLoading={isMedicalRecordLoading}
 							isEdit={!!currentMedicalRecord}
 						/>
