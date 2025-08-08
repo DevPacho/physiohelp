@@ -3,16 +3,16 @@ import { IMedicalRecord } from '@interfaces'
 import { apiPublic } from '../config'
 
 interface IUpdateMedicalRecordParams {
-	patientIdentification: string
+	medicalRecordId: number
 	medicalRecordData: Partial<IMedicalRecord>
 }
 
 export const updateMedicalRecord = async ({
-	patientIdentification,
+	medicalRecordId,
 	medicalRecordData,
 }: IUpdateMedicalRecordParams): Promise<IMedicalRecord> => {
 	const { data } = await apiPublic.put(
-		`/users/${patientIdentification}/medical-records/`,
+		`/medical-records/${medicalRecordId}`,
 		medicalRecordData
 	)
 

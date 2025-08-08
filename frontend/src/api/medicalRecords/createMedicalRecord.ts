@@ -3,18 +3,18 @@ import { IMedicalRecord } from '@interfaces'
 import { apiPublic } from '../config'
 
 interface ICreateMedicalRecordParams {
-	patientIdentification: string
+	patientId: number
 	medicalRecordData: Partial<IMedicalRecord>
 }
 
 export const createMedicalRecord = async ({
-	patientIdentification,
+	patientId,
 	medicalRecordData,
 }: ICreateMedicalRecordParams): Promise<IMedicalRecord> => {
-	const { data } = await apiPublic.post(
-		`/users/${patientIdentification}/medical-records/`,
-		medicalRecordData
-	)
+	const { data } = await apiPublic.post(`/medical-records/`, {
+		user_id: patientId,
+		...medicalRecordData,
+	})
 
 	return data
 }

@@ -6,7 +6,7 @@ import {
 	deleteEvolution,
 	deleteMedicalRecord,
 	generateAndDownloadMedicalRecordPdf,
-	getMedicalRecordByIdentification,
+	getMedicalRecordByPatientId,
 	getPatientById,
 	updateEvolution,
 	updateMedicalRecord,
@@ -93,15 +93,13 @@ export const useMedicalRecords = (
 			.finally(() => setIsPatientLoading(false))
 	}
 
-	const fetchMedicalRecordByPatientIdentification = (
-		patientIdentification: string
-	) => {
-		if (!patientIdentification) return
+	const fetchMedicalRecordByUserId = (userId: number) => {
+		if (!userId) return
 
 		setIsMedicalRecordLoading(true)
 
-		getMedicalRecordByIdentification({
-			patientIdentification,
+		getMedicalRecordByPatientId({
+			patientId: patientIdNumber,
 		})
 			.then((response: IMedicalRecord) => {
 				if (response) {
@@ -138,7 +136,7 @@ export const useMedicalRecords = (
 
 		if (currentMedicalRecord) {
 			updateMedicalRecord({
-				patientIdentification: currentPatient.identification,
+				medicalRecordId: currentMedicalRecord.id,
 				medicalRecordData,
 			})
 				.then(response => {
@@ -157,7 +155,7 @@ export const useMedicalRecords = (
 				.finally(() => setIsMedicalRecordLoading(false))
 		} else {
 			createMedicalRecord({
-				patientIdentification: currentPatient.identification,
+				patientId: patientIdNumber,
 				medicalRecordData,
 			})
 				.then(response => {
@@ -314,7 +312,7 @@ export const useMedicalRecords = (
 
 	useEffect(() => {
 		if (currentPatient) {
-			fetchMedicalRecordByPatientIdentification(currentPatient.identification)
+			fetchMedicalRecordByUserId(currentPatient.id)
 		}
 	}, [currentPatient])
 
