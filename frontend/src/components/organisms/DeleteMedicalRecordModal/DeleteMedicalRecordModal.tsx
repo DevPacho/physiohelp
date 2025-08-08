@@ -4,7 +4,7 @@ import { Button } from '@components/atoms'
 
 interface IDeleteMedicalRecordModalProps {
 	patient: IPatient
-	medicalRecord: IMedicalRecord
+	medicalRecord: IMedicalRecord | null
 	isDeletingMedicalRecord: boolean
 	deleteMedicalRecord: (medicalRecordId: number) => Promise<void>
 }
@@ -15,12 +15,16 @@ export const DeleteMedicalRecordModal = ({
 	isDeletingMedicalRecord,
 	deleteMedicalRecord,
 }: IDeleteMedicalRecordModalProps) => {
+	if (!medicalRecord) return null
+
 	const handleDelete = () => deleteMedicalRecord(medicalRecord.id)
 
 	return (
 		<div className='mt-5 text-sm text-black'>
 			<p>
-				¿Está segura de que desea eliminar la historia clínica del paciente{' '}
+				¿Está segura de que desea eliminar{' '}
+				{patient.type === 'SOAT' ? 'la historia clínica' : 'el informe final'}{' '}
+				del paciente{' '}
 				<span className='font-semibold text-black capitalize'>
 					{patient.name} {patient.last_name}
 				</span>{' '}
@@ -32,8 +36,8 @@ export const DeleteMedicalRecordModal = ({
 				<Button
 					text={
 						isDeletingMedicalRecord
-							? 'Eliminando Historia Clínica...'
-							: 'Eliminar Historia Clínica'
+							? `Eliminando ${patient.type === 'SOAT' ? 'Historia Clínica' : 'Informe Final'}...`
+							: `Eliminar ${patient.type === 'SOAT' ? 'Historia Clínica' : 'Informe Final'}`
 					}
 					onClick={handleDelete}
 					disabled={isDeletingMedicalRecord}
