@@ -106,6 +106,8 @@ export const usePatients = (): IUsePatientsReturn => {
 			| Omit<IPatient, 'id'>
 			| { patientId: number; patientData: Partial<IPatient> }
 	) => {
+		if (!data) return
+
 		setIsPatientModalLoading(true)
 
 		if ('patientId' in data) {
@@ -125,10 +127,9 @@ export const usePatients = (): IUsePatientsReturn => {
 					setSelectedPatient(null)
 					toast.success('Paciente actualizado exitosamente')
 				})
-				.catch(error => {
+				.catch(() =>
 					toast.error('Ha ocurrido un error al actualizar el paciente')
-					throw error
-				})
+				)
 				.finally(() => setIsPatientModalLoading(false))
 		} else {
 			createPatient({
@@ -148,15 +149,14 @@ export const usePatients = (): IUsePatientsReturn => {
 					setIsPatientModalOpen(false)
 					toast.success('Paciente creado exitosamente')
 				})
-				.catch(error => {
-					toast.error('Ha ocurrido un error al crear el paciente')
-					throw error
-				})
+				.catch(() => toast.error('Ha ocurrido un error al crear el paciente'))
 				.finally(() => setIsPatientModalLoading(false))
 		}
 	}
 
 	const handleDeletePatient = async (patientId: number) => {
+		if (!patientId) return
+
 		setIsDeletingPatient(true)
 
 		deletePatient({
@@ -184,10 +184,7 @@ export const usePatients = (): IUsePatientsReturn => {
 				setSelectedPatientToDelete(null)
 				toast.success('Paciente eliminado exitosamente')
 			})
-			.catch(error => {
-				toast.error('Ha ocurrido un error al eliminar el paciente')
-				throw error
-			})
+			.catch(() => toast.error('Ha ocurrido un error al eliminar el paciente'))
 			.finally(() => setIsDeletingPatient(false))
 	}
 
