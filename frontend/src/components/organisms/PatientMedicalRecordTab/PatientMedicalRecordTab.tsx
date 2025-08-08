@@ -14,8 +14,8 @@ interface IPatientMedicalRecordTabProps {
 	showMedicalRecordModal: boolean
 	setShowMedicalRecordModal: Dispatch<SetStateAction<boolean>>
 	handleCreateOrUpdateMedicalRecord: (
-		medicalRecordData: IMedicalRecord
-	) => Promise<boolean>
+		medicalRecordData: Partial<IMedicalRecord>
+	) => Promise<void>
 }
 
 export const PatientMedicalRecordTab = ({

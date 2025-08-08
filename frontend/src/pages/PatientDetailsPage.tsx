@@ -13,11 +13,11 @@ export const PatientDetailsPage = () => {
 		currentMedicalRecord,
 		isMedicalRecordLoading,
 		isEvolutionLoading,
+		isDownloadingPdf,
 		activeTab,
 		setActiveTab,
 		showMedicalRecordModal,
 		setShowMedicalRecordModal,
-		isDownloadingPdf,
 		handleCreateOrUpdateMedicalRecord,
 		handleCreateEvolution,
 		handleUpdateEvolution,
@@ -109,15 +109,14 @@ export const PatientDetailsPage = () => {
 						/>
 					)}
 					{activeTab === 'evolutions' &&
-						currentMedicalRecord &&
-						currentPatient.type === 'SOAT' && (
+						currentPatient.type === 'SOAT' &&
+						currentMedicalRecord && (
 							<EvolutionList
-								evolutions={currentMedicalRecord.evolutions}
-								medicalRecordId={currentMedicalRecord.id}
-								onCreateEvolution={handleCreateEvolution}
-								onUpdateEvolution={handleUpdateEvolution}
-								onDeleteEvolution={handleDeleteEvolution}
 								isLoading={isEvolutionLoading}
+								evolutions={currentMedicalRecord.evolutions}
+								handleCreateEvolution={handleCreateEvolution}
+								handleUpdateEvolution={handleUpdateEvolution}
+								handleDeleteEvolution={handleDeleteEvolution}
 							/>
 						)}
 				</section>
