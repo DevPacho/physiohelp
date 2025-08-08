@@ -85,6 +85,18 @@ export const MedicalRecordModal = ({
 			fieldsErrors.sessions = 'El número de sesiones es requerido.'
 		}
 
+		if (!medicalRecordData.diagnosis.trim()) {
+			fieldsErrors.diagnosis = 'El diagnóstico es requerido.'
+		}
+
+		if (!medicalRecordData.consultation_reason.trim()) {
+			fieldsErrors.consultation_reason = 'El motivo de consulta es requerido.'
+		}
+
+		if (patient.type === 'Particular' && !medicalRecordData.report.trim()) {
+			fieldsErrors.report = 'El informe final es requerido.'
+		}
+
 		setErrors(fieldsErrors)
 		return Object.keys(fieldsErrors).length === 0
 	}
@@ -180,6 +192,9 @@ export const MedicalRecordModal = ({
 						onChange={value => handleFieldChange('diagnosis', value)}
 						disabled={isLoading}
 					/>
+					{errors.diagnosis && (
+						<p className='text-xs text-red-500'>{errors.diagnosis}</p>
+					)}
 				</fieldset>
 			</div>
 			<div className='mt-4'>
@@ -197,6 +212,9 @@ export const MedicalRecordModal = ({
 						disabled={isLoading}
 						rows={3}
 					/>
+					{errors.consultation_reason && (
+						<p className='text-xs text-red-500'>{errors.consultation_reason}</p>
+					)}
 				</fieldset>
 			</div>
 			{patient.type === 'Particular' && (
@@ -215,6 +233,9 @@ export const MedicalRecordModal = ({
 							disabled={isLoading}
 							rows={6}
 						/>
+						{errors.report && (
+							<p className='text-xs text-red-500'>{errors.report}</p>
+						)}
 					</fieldset>
 				</div>
 			)}
