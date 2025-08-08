@@ -77,9 +77,9 @@ export const PatientsTable = () => {
 	return (
 		<section className='flex size-full flex-col items-center gap-5'>
 			<header className='flex w-full flex-col justify-between gap-3 md:flex-row md:items-center'>
-				<h2 className='min-w-fit text-xl font-semibold text-black'>
+				<h1 className='min-w-fit text-xl font-semibold text-black'>
 					Gestión de Pacientes
-				</h2>
+				</h1>
 				<div className='flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:justify-end'>
 					<Input
 						type='text'
@@ -91,7 +91,7 @@ export const PatientsTable = () => {
 				</div>
 				<Modal
 					title={
-						patientModalType === 'create' ? 'Nuevo Paciente' : 'Editar Paciente'
+						patientModalType === 'create' ? 'Nuevo Paciente' : 'Actualizar Paciente'
 					}
 					subtitle={
 						patientModalType === 'create'
@@ -193,10 +193,10 @@ export const PatientsTable = () => {
 									<td className='flex items-center gap-3 *:cursor-pointer'>
 										<button
 											type='button'
-											title='Editar paciente'
+											title='Actualizar paciente'
 											onClick={() => handleSelectPatientToUpdate(patient)}
 										>
-											<IcPencil className='size-5 fill-black' />
+											<IcPencil className='size-5 fill-black hover:fill-primary-light' />
 										</button>
 										<button
 											type='button'
