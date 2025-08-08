@@ -1,7 +1,10 @@
 import { useMedicalRecords } from '@hooks'
 
 import { Button, IcChevron } from '@components/atoms'
-import { EvolutionList, PatientMedicalRecordTab } from '@components/organisms'
+import {
+	PatientEvolutionTab,
+	PatientMedicalRecordTab,
+} from '@components/organisms'
 import { useNavigate, useParams } from 'react-router'
 
 export const PatientDetailsPage = () => {
@@ -111,7 +114,7 @@ export const PatientDetailsPage = () => {
 					{activeTab === 'evolutions' &&
 						currentPatient.type === 'SOAT' &&
 						currentMedicalRecord && (
-							<EvolutionList
+							<PatientEvolutionTab
 								isLoading={isEvolutionLoading}
 								evolutions={currentMedicalRecord.evolutions}
 								handleCreateEvolution={handleCreateEvolution}
