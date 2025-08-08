@@ -100,30 +100,33 @@ export const useMedicalRecords = (
 
 		setIsMedicalRecordLoading(true)
 
-        getMedicalRecordByIdentification({
-            patientIdentification,
-        })
-            .then((response: IMedicalRecord) => {
-                if (response) {
-                    setCurrentMedicalRecord(response)
-                } else {
-                    setCurrentMedicalRecord(null)
-                }
-            })
-            .catch((error: any) => {
-                if (error?.response?.status === 404 || error?.message?.includes('404')) {
-                    setCurrentMedicalRecord(null)
-                } else {
-                    toast.error(
-                        `Ha ocurrido un error al cargar ${
-                            currentPatient?.type === 'SOAT'
-                                ? 'la historia clínica'
-                                : 'el informe final'
-                        } del paciente`
-                    )
-                }
-            })
-            .finally(() => setIsMedicalRecordLoading(false))
+		getMedicalRecordByIdentification({
+			patientIdentification,
+		})
+			.then((response: IMedicalRecord) => {
+				if (response) {
+					setCurrentMedicalRecord(response)
+				} else {
+					setCurrentMedicalRecord(null)
+				}
+			})
+			.catch((error: any) => {
+				if (
+					error?.response?.status === 404 ||
+					error?.message?.includes('404')
+				) {
+					setCurrentMedicalRecord(null)
+				} else {
+					toast.error(
+						`Ha ocurrido un error al cargar ${
+							currentPatient?.type === 'SOAT'
+								? 'la historia clínica'
+								: 'el informe final'
+						} del paciente`
+					)
+				}
+			})
+			.finally(() => setIsMedicalRecordLoading(false))
 	}
 
 	const handleMedicalRecordSubmit = async (
