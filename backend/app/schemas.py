@@ -97,7 +97,7 @@ class MedicalRecordBase(BaseModel):
             raise ValueError('Date must be a string, date, or datetime object')
 
 class MedicalRecordCreate(MedicalRecordBase):
-    pass
+    user_id: int
 
 class MedicalRecordUpdate(BaseModel):
     date: Optional[str] = None  

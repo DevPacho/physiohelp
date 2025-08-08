@@ -64,7 +64,7 @@ class NumberedCanvas:
             page_width = A4[0]
             
             # First line
-            line1 = "Dra. Victoria Potes Eugenia Arana  Fisioterapeuta reg. 60278 U.A.M"
+            line1 = "Dra. Victoria Eugenia Potes Arana  Fisioterapeuta reg. 60278 U.A.M"
             line1_width = canvas.stringWidth(line1, 'Helvetica', 9)
             x1 = (page_width - line1_width) / 2
             y1 = 80  # Position Y for the first line
@@ -308,13 +308,13 @@ class PDFService:
         
         signature_data = []
         
-        signature_data.append(['Paciente:', f"{user.name} {user.last_name}"])
+        signature_data.append([Paragraph('<b>PACIENTE</b>', normal_style), Paragraph(f'<b>{user.name} {user.last_name}  CC: {user.identification}</b>', normal_style)])
         
         if hasattr(user, 'medical_record') and user.medical_record:
             diagnosis = user.medical_record.diagnosis if hasattr(user.medical_record, 'diagnosis') and user.medical_record.diagnosis else 'No especificado'
-            signature_data.append(['Diagnóstico:', diagnosis])
+            signature_data.append([Paragraph('<b>DIAGNOSTICO</b>', normal_style), Paragraph(f'<b>{diagnosis}</b>', normal_style)])
             
-            signature_data.append(['Fecha:', 'Firma:'])
+            signature_data.append(['FECHA', 'FIRMA'])
             
             if hasattr(user.medical_record, 'evolutions') and user.medical_record.evolutions:
                 for evolution in user.medical_record.evolutions:
@@ -367,7 +367,7 @@ class PDFService:
             fontSize=18,
             spaceAfter=30,
             alignment=TA_CENTER,
-            textColor=colors.darkblue
+            textColor=colors.black
         )
         
         subtitle_style = ParagraphStyle(
@@ -375,7 +375,7 @@ class PDFService:
             parent=styles['Heading2'],
             fontSize=14,
             spaceAfter=12,
-            textColor=colors.darkblue
+            textColor=colors.black
         )
         
         normal_style = ParagraphStyle(
@@ -387,11 +387,12 @@ class PDFService:
         
         # Contenido del PDF
         story = []
+        story.append(Spacer(1, 25))
         
         # TÍTULO PRINCIPAL - INFORME FINAL
         title = Paragraph("INFORME FINAL", title_style)
         story.append(title)
-        story.append(Spacer(1, 20))
+        story.append(Spacer(1, 5))
         
         # Información del informe final
         if hasattr(user, 'medical_record') and user.medical_record:

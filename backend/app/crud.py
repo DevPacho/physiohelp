@@ -1,4 +1,6 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import desc
+from sqlalchemy import or_, func
 from typing import Optional
 from datetime import datetime, date  
 
@@ -12,9 +14,8 @@ def get_user(db: Session, user_id: int):
 def get_user_by_identification(db: Session, identification: str):
     return db.query(models.User).filter(models.User.identification == identification).first()
 
-def get_users(db: Session, offset: int = 0, limit: int = 12):
-    return db.query(models.User).offset(offset).limit(limit).all()
-
+def get_users(db: Session, skip: int = 0, limit: int = 12):
+    return db.query(models.User).order_by(desc(models.User.id)).offset(skip).limit(limit).all()
 def get_users_count(db: Session):
     return db.query(models.User).count()
 
@@ -76,9 +77,48 @@ def delete_user(db: Session, user_id: int):
         db.rollback()
         return False
 
+def search_users_by_identification(db: Session, identification: str, skip: int = 0, limit: int = 100):
+    """Buscar usuarios por identificación en toda la base de datos"""
+    return db.query(models.User).filter(
+        models.User.identification.ilike(f"%{identification}%")
+    ).offset(skip).limit(limit).all()
+
+
+def search_users_by_name_or_identification(db: Session, search_term: str, skip: int = 0, limit: int = 100):
+    """Buscar usuarios por nombre, apellido o identificación en toda la base de datos"""
+    return db.query(models.User).filter(
+        or_(
+            models.User.name.ilike(f"%{search_term}%"),
+            models.User.last_name.ilike(f"%{search_term}%"),
+            models.User.identification.ilike(f"%{search_term}%")
+        )
+    ).order_by(desc(models.User.id)).offset(skip).limit(limit).all()
+
+def get_users_count_by_search(db: Session, search_term: str):
+    """Obtener conteo de usuarios que coinciden con el término de búsqueda"""
+    from sqlalchemy import or_
+    return db.query(models.User).filter(
+        or_(
+            models.User.name.ilike(f"%{search_term}%"),
+            models.User.last_name.ilike(f"%{search_term}%"),
+            models.User.identification.ilike(f"%{search_term}%")
+        )
+    ).count()
+
 # Medical Record functions
+
 def get_medical_record(db: Session, medical_record_id: int):
+    """Obtener una historia clínica por su ID"""
     return db.query(models.MedicalRecord).filter(models.MedicalRecord.id == medical_record_id).first()
+
+
+def get_medical_records(db: Session, offset: int = 0, limit: int = 12):
+    return db.query(models.MedicalRecord).order_by(desc(models.MedicalRecord.id)).offset(offset).limit(limit).all()
+
+def get_medical_record_by_user_id(db: Session, user_id: int):
+    """Obtener historia clínica por ID de usuario"""
+    return db.query(models.MedicalRecord).filter(models.MedicalRecord.user_id == user_id).first()
+
 
 def get_medical_record_by_user(db: Session, user_identification: str):
     """Buscar medical record por identificación del usuario"""
@@ -87,20 +127,15 @@ def get_medical_record_by_user(db: Session, user_identification: str):
         return db.query(models.MedicalRecord).filter(models.MedicalRecord.user_id == user.id).first()
     return None
 
-def get_medical_records(db: Session, offset: int = 0, limit: int = 12):
-    return db.query(models.MedicalRecord).offset(offset).limit(limit).all()
 
 def get_medical_records_count(db: Session):
     return db.query(models.MedicalRecord).count()
 
-def create_user_medical_record(db: Session, medical_record: schemas.MedicalRecordCreate, user_identification: str):
-    """Crear medical record usando la identificación del usuario"""
-    user = get_user_by_identification(db, user_identification)
-    if not user:
-        return None
-    
+def create_user_medical_record(db: Session, medical_record: schemas.MedicalRecordCreate):
+    """Crear medical record usando user_id directamente"""
     medical_record_data = medical_record.dict()
     
+    # Procesar fecha si existe
     if medical_record_data.get('date') and isinstance(medical_record_data['date'], str):
         try:
             medical_record_data['date'] = datetime.strptime(medical_record_data['date'], '%Y-%m-%d').date()
@@ -110,7 +145,17 @@ def create_user_medical_record(db: Session, medical_record: schemas.MedicalRecor
             except ValueError:
                 medical_record_data['date'] = None
     
-    db_medical_record = models.MedicalRecord(**medical_record_data, user_id=user.id)
+    # Crear el medical record con user_id directamente del schema
+    db_medical_record = models.MedicalRecord(
+        diagnosis=medical_record.diagnosis,
+        user_id=medical_record.user_id,
+        date=medical_record_data.get('date'),
+        user_age=medical_record.user_age,
+        sessions=medical_record.sessions,
+        consultation_reason=medical_record.consultation_reason,
+        report=medical_record.report
+    )
+    
     db.add(db_medical_record)
     db.commit()
     db.refresh(db_medical_record)
@@ -142,12 +187,10 @@ def delete_medical_record(db: Session, medical_record_id: int):
     try:
         db_medical_record = db.query(models.MedicalRecord).filter(models.MedicalRecord.id == medical_record_id).first()
         if not db_medical_record:
-            return None
+            return False  
         
-        # Eliminar todas las evoluciones asociadas primero
         db.query(models.Evolution).filter(models.Evolution.medical_record_id == medical_record_id).delete()
         
-        # Eliminar el medical record
         db.delete(db_medical_record)
         db.commit()
         return True
@@ -209,3 +252,16 @@ def validate_evolution_belongs_to_medical_record(db: Session, evolution_id: int,
         models.Evolution.medical_record_id == medical_record_id
     ).first()
     return evolution is not None
+
+# Evolution pagination functions
+def get_evolutions_by_medical_record(db: Session, medical_record_id: int, offset: int = 0, limit: int = 5):
+    """Get paginated evolutions for a medical record, ordered by ID ascending (oldest first)"""
+    return db.query(models.Evolution).filter(
+        models.Evolution.medical_record_id == medical_record_id
+    ).order_by(models.Evolution.id.asc()).offset(offset).limit(limit).all()
+
+def get_evolutions_count_by_medical_record(db: Session, medical_record_id: int):
+    """Get total count of evolutions for a medical record"""
+    return db.query(models.Evolution).filter(
+        models.Evolution.medical_record_id == medical_record_id
+    ).count()

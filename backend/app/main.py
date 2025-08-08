@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException, Body
+from fastapi import Depends, FastAPI, HTTPException, Body, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -49,17 +49,35 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     if db_user:
         raise HTTPException(status_code=400, detail="User with this identification already exists")
     return crud.create_user(db=db, user=user)
-
 @app.get("/users/", response_model=list[schemas.User], tags=["Users"])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Get all users"""
-    users = crud.get_users(db, offset=skip, limit=limit)
+def get_users(
+    skip: int = Query(0, ge=0), 
+    limit: int = Query(12, ge=1, le=100),
+    search: str = Query(None, description="Search by name, last name or identification"),
+    db: Session = Depends(get_db)
+):
+    """Get all users with pagination and optional search"""
+    if search and search.strip():
+        users = crud.search_users_by_name_or_identification(
+            db=db, 
+            search_term=search.strip(), 
+            skip=skip, 
+            limit=limit
+        )
+    else:
+        users = crud.get_users(db, skip=skip, limit=limit)
     return users
 
 @app.get("/users/count", tags=["Users"])
-def get_users_count(db: Session = Depends(get_db)):
-    """Get total count of users"""
-    count = crud.get_users_count(db)
+def get_users_count(
+    search: str = Query(None, description="Search by name, last name or identification"),
+    db: Session = Depends(get_db)
+):
+    """Get total count of users with optional search filter"""
+    if search and search.strip():
+        count = crud.get_users_count_by_search(db=db, search_term=search.strip())
+    else:
+        count = crud.get_users_count(db)
     return {"count": count}
 
 @app.get("/users/{user_id}", response_model=schemas.User, tags=["Users"])
@@ -171,21 +189,25 @@ async def generate_user_pdf(
         raise HTTPException(status_code=500, detail=f"Error al generar PDF: {str(e)}")
 
 # Medical Records endpoints
-@app.get("/users/{user_identification}/medical-records/", response_model=schemas.MedicalRecord, tags=["Medical Records"])
-def get_medical_record(user_identification: str, db: Session = Depends(get_db)):
-    """Get medical record for a user by identification"""
-    db_user = crud.get_user_by_identification(db, identification=user_identification)
+@app.get("/users/{user_id}/medical-records/", response_model=schemas.MedicalRecord, tags=["Medical Records"])
+def get_medical_record_by_user(user_id: int, db: Session = Depends(get_db)):
+    """Get medical record for a user by user ID"""
+    db_user = crud.get_user(db, user_id=user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     
-    medical_record = crud.get_medical_record_by_user(db, user_identification=user_identification)
+    medical_record = crud.get_medical_record_by_user_id(db, user_id=user_id)
     if medical_record is None:
         raise HTTPException(status_code=404, detail="Medical record not found")
     
     return medical_record
 
 @app.get("/medical-records/", response_model=list[schemas.MedicalRecord], tags=["Medical Records"])
-def get_all_medical_records(skip: int = 0, limit: int = 12, db: Session = Depends(get_db)):
+def get_all_medical_records(
+    skip: int = Query(0, ge=0), 
+    limit: int = Query(12, ge=1, le=100), 
+    db: Session = Depends(get_db)
+):
     """Get all medical records with pagination"""
     medical_records = crud.get_medical_records(db, offset=skip, limit=limit)
     return medical_records
@@ -196,52 +218,35 @@ def get_medical_records_count(db: Session = Depends(get_db)):
     count = crud.get_medical_records_count(db)
     return {"count": count}
 
-@app.post("/users/{user_identification}/medical-records/", response_model=schemas.MedicalRecord, tags=["Medical Records"])
-def create_medical_record(
-    user_identification: str, 
-    medical_record: schemas.MedicalRecordCreate, 
-    db: Session = Depends(get_db)
-):
-    """Create or update medical record for a user by identification"""
-    # Buscar usuario por identificación
-    db_user = crud.get_user_by_identification(db, identification=user_identification)
+@app.post("/medical-records/", response_model=schemas.MedicalRecord, tags=["Medical Records"])
+def create_medical_record(medical_record: schemas.MedicalRecordCreate, db: Session = Depends(get_db)):
+    """Create medical record with user_id"""
+    # Verificar que el usuario existe
+    db_user = crud.get_user(db, user_id=medical_record.user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Verificar si ya existe una historia clínica para este usuario
-    existing_record = crud.get_medical_record_by_user(db, user_identification=user_identification)
-    
+    # Verificar que no tenga ya una historia clínica
+    existing_record = crud.get_medical_record_by_user_id(db, user_id=medical_record.user_id)
     if existing_record:
-        # Si existe, actualizarla
-        medical_record_update = schemas.MedicalRecordUpdate(**medical_record.model_dump())
-        updated_record = crud.update_medical_record(db=db, record_id=existing_record.id, medical_record_update=medical_record_update)
-        return updated_record
-    else:
-        # Si no existe, crear una nueva
-        db_medical_record = crud.create_user_medical_record(db=db, medical_record=medical_record, user_identification=user_identification)
-        if db_medical_record is None:
-            raise HTTPException(status_code=400, detail="Could not create medical record")
-        return db_medical_record
+        raise HTTPException(status_code=400, detail="User already has a medical record")
+    
+    return crud.create_user_medical_record(db=db, medical_record=medical_record)
 
-@app.put("/users/{user_identification}/medical-records/", response_model=schemas.MedicalRecord, tags=["Medical Records"])
+@app.put("/medical-records/{medical_record_id}", response_model=schemas.MedicalRecord, tags=["Medical Records"])
 def update_medical_record(
-    user_identification: str, 
+    medical_record_id: int,
     medical_record_update: schemas.MedicalRecordUpdate, 
     db: Session = Depends(get_db)
 ):
-    """Update medical record for a user by identification"""
-    # Buscar usuario por identificación
-    db_user = crud.get_user_by_identification(db, identification=user_identification)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Buscar historia clínica existente
-    existing_record = crud.get_medical_record_by_user(db, user_identification=user_identification)
+    """Update medical record by ID"""
+    # Verificar que existe
+    existing_record = crud.get_medical_record(db, medical_record_id=medical_record_id)
     if existing_record is None:
         raise HTTPException(status_code=404, detail="Medical record not found")
     
     # Actualizar
-    updated_record = crud.update_medical_record(db=db, record_id=existing_record.id, medical_record_update=medical_record_update)
+    updated_record = crud.update_medical_record(db=db, record_id=medical_record_id, medical_record_update=medical_record_update)
     return updated_record
 
 @app.delete("/medical-records/{medical_record_id}", tags=["Medical Records"])
@@ -260,6 +265,46 @@ def delete_medical_record(medical_record_id: int, db: Session = Depends(get_db))
         raise HTTPException(status_code=500, detail="Error deleting medical record")
 
 # Evolution endpoints
+
+@app.get("/medical-records/{medical_record_id}/evolutions", response_model=list[schemas.Evolution], tags=["Evolutions"])
+def get_evolutions_by_medical_record(
+    medical_record_id: int,
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=100, description="Items per page"),
+    db: Session = Depends(get_db)
+):
+    """Get paginated evolutions for a medical record"""
+    # Verificar que el medical record existe
+    db_medical_record = crud.get_medical_record(db, medical_record_id=medical_record_id)
+    if db_medical_record is None:
+        raise HTTPException(status_code=404, detail="Medical record not found")
+    
+    offset = (page - 1) * limit
+    evolutions = crud.get_evolutions_by_medical_record(
+        db=db, 
+        medical_record_id=medical_record_id, 
+        offset=offset, 
+        limit=limit
+    )
+    return evolutions
+
+@app.get("/medical-records/{medical_record_id}/evolutions/count", tags=["Evolutions"])
+def get_evolutions_count_by_medical_record(
+    medical_record_id: int, 
+    db: Session = Depends(get_db)
+):
+    """Get total count of evolutions for a medical record"""
+    # Verificar que el medical record existe
+    db_medical_record = crud.get_medical_record(db, medical_record_id=medical_record_id)
+    if db_medical_record is None:
+        raise HTTPException(status_code=404, detail="Medical record not found")
+    
+    count = crud.get_evolutions_count_by_medical_record(
+        db=db, 
+        medical_record_id=medical_record_id
+    )
+    return {"count": count}
+
 @app.post("/medical-records/{medical_record_id}/evolutions/", response_model=schemas.Evolution, tags=["Evolutions"])
 def create_evolution(
     medical_record_id: int,
