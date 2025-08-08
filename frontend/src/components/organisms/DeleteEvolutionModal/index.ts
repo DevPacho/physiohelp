@@ -1,0 +1,1 @@
+export { DeleteEvolutionModal } from './DeleteEvolutionModal'
