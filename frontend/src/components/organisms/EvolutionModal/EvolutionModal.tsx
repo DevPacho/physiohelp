@@ -23,7 +23,7 @@ interface IEvolutionModalProps {
 	isLoading: boolean
 	isEdit?: boolean
 	onSubmit: (
-		evolutionData: Omit<IEvolution, 'id' | 'medical_record_id'>
+		evolutionData: Partial<IEvolution>
 	) => Promise<void>
 }
 

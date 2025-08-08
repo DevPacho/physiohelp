@@ -3,28 +3,21 @@ import { Dispatch, SetStateAction } from 'react'
 import { IMedicalRecord, IPatient } from '@interfaces'
 
 import { Button, IcPencil, IcSpinner, IcTrash } from '@components/atoms'
-import { Modal } from '@components/molecules'
-
-import { MedicalRecordModal } from '../MedicalRecordModal'
 
 interface IPatientMedicalRecordTabProps {
 	isMedicalRecordLoading: boolean
 	currentPatient: IPatient
 	currentMedicalRecord: IMedicalRecord | null
-	showMedicalRecordModal: boolean
 	setShowMedicalRecordModal: Dispatch<SetStateAction<boolean>>
-	handleCreateOrUpdateMedicalRecord: (
-		medicalRecordData: Partial<IMedicalRecord>
-	) => Promise<void>
+	setShowDeleteMedicalRecordModal: Dispatch<SetStateAction<boolean>>
 }
 
 export const PatientMedicalRecordTab = ({
 	isMedicalRecordLoading,
 	currentPatient,
 	currentMedicalRecord,
-	showMedicalRecordModal,
 	setShowMedicalRecordModal,
-	handleCreateOrUpdateMedicalRecord,
+	setShowDeleteMedicalRecordModal,
 }: IPatientMedicalRecordTabProps) => (
 	<>
 		{isMedicalRecordLoading ? (
@@ -51,7 +44,7 @@ export const PatientMedicalRecordTab = ({
 							<button
 								type='button'
 								title={`Eliminar ${currentPatient.type === 'SOAT' ? 'historia clínica' : 'informe final'}`}
-								// onClick={() => setDeletingEvolution(evolution)}
+								onClick={() => setShowDeleteMedicalRecordModal(true)}
 							>
 								<IcTrash className='size-4.5 fill-black hover:fill-red-500' />
 							</button>
@@ -96,7 +89,7 @@ export const PatientMedicalRecordTab = ({
 						<label className='text-sm font-medium text-black'>
 							Diagnóstico
 						</label>
-						<span className='rounded-md bg-gray-50 p-4'>
+						<span className='max-h-[200px] overflow-y-auto rounded-md bg-gray-50 p-4'>
 							<p className='text-sm whitespace-pre-wrap text-black'>
 								{currentMedicalRecord.diagnosis || '----'}
 							</p>
@@ -106,7 +99,7 @@ export const PatientMedicalRecordTab = ({
 						<label className='text-sm font-medium text-black'>
 							Motivo de Consulta
 						</label>
-						<span className='rounded-md bg-gray-50 p-4'>
+						<span className='max-h-[200px] overflow-y-auto rounded-md bg-gray-50 p-4'>
 							<p className='text-sm whitespace-pre-wrap text-black'>
 								{currentMedicalRecord.consultation_reason || '----'}
 							</p>
@@ -117,7 +110,7 @@ export const PatientMedicalRecordTab = ({
 							<label className='text-sm font-medium text-black'>
 								Informe Final
 							</label>
-							<span className='rounded-md bg-gray-50 p-4'>
+							<span className='max-h-[200px] overflow-y-auto rounded-md bg-gray-50 p-4'>
 								<p className='text-sm whitespace-pre-wrap text-black'>
 									{currentMedicalRecord.report}
 								</p>
@@ -125,31 +118,6 @@ export const PatientMedicalRecordTab = ({
 						</fieldset>
 					)}
 				</div>
-				{showMedicalRecordModal && currentPatient && (
-					<Modal
-						title={
-							currentMedicalRecord
-								? `Actualizar ${currentPatient.type === 'SOAT' ? 'Historia Clínica' : 'Informe Final'}`
-								: `Crear ${currentPatient.type === 'SOAT' ? 'Historia Clínica' : 'Informe Final'}`
-						}
-						subtitle={
-							currentMedicalRecord
-								? `Modifica los campos necesarios para actualizar ${currentPatient.type === 'SOAT' ? 'la historia clínica' : 'el informe final'}.`
-								: `Diligencia todos los campos para crear ${currentPatient.type === 'SOAT' ? 'la historia clínica' : 'el informe final'}.`
-						}
-						isOpen={showMedicalRecordModal}
-						onClose={() => setShowMedicalRecordModal(false)}
-						modalContentClassName='w-full xl:min-w-[800px] xl:w-fit'
-					>
-						<MedicalRecordModal
-							patient={currentPatient}
-							medicalRecord={currentMedicalRecord}
-							onSubmit={handleCreateOrUpdateMedicalRecord}	
-							isLoading={isMedicalRecordLoading}
-							isEdit={!!currentMedicalRecord}
-						/>
-					</Modal>
-				)}
 			</div>
 		) : (
 			<div className='flex flex-col justify-between gap-4 md:flex-row md:items-center'>
