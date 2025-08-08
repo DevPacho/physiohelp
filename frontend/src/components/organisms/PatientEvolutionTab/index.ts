@@ -1,0 +1,1 @@
+export { PatientEvolutionTab } from './PatientEvolutionTab'
