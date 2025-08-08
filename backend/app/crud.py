@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
 from typing import Optional
 from datetime import datetime, date  
 
@@ -13,31 +12,11 @@ def get_user(db: Session, user_id: int):
 def get_user_by_identification(db: Session, identification: str):
     return db.query(models.User).filter(models.User.identification == identification).first()
 
-def get_users(db: Session, offset: int = 0, limit: int = 12, search: Optional[str] = None):
-    query = db.query(models.User)
-    
-    if search:
-        # filter by name or last namne (search not sensible by capital letters)
-        search_filter = or_(
-            models.User.name.ilike(f"%{search}%"),
-            models.User.last_name.ilike(f"%{search}%")
-        )
-        query = query.filter(search_filter)
-    
-    return query.offset(offset).limit(limit).all()
+def get_users(db: Session, offset: int = 0, limit: int = 12):
+    return db.query(models.User).offset(offset).limit(limit).all()
 
-def get_users_count(db: Session, search: Optional[str] = None):
-    query = db.query(models.User)
-    
-    if search:
-        # Same filter as in get_users
-        search_filter = or_(
-            models.User.name.ilike(f"%{search}%"),
-            models.User.last_name.ilike(f"%{search}%")
-        )
-        query = query.filter(search_filter)
-    
-    return query.count()
+def get_users_count(db: Session):
+    return db.query(models.User).count()
 
 def get_total_users(db: Session):
     return db.query(models.User).count()

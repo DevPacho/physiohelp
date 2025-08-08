@@ -26,7 +26,7 @@ class NumberedCanvas:
 
     def draw_page_elements(self, is_last_page=False):
         """Dibuja los elementos de cada página"""
-        canvas = self.canvas
+        canvas = self.canvas    
         
         # background image
         if 'fondo' in self.images_data and self.images_data['fondo']:
@@ -42,13 +42,13 @@ class NumberedCanvas:
             except Exception as e:
                 print(f"Error drawing background image: {e}")
         
-        # Header
+     # Header
         if 'header' in self.images_data and self.images_data['header']:
             try:
-                header_width = 410
+                header_width = 310
                 header_height = 80
                 x = (A4[0] - header_width) / 2
-                y = A4[1] - 110  
+                y = A4[1] - 90  
                 canvas.drawImage(self.images_data['header'], x, y, width=header_width, height=header_height)
             except Exception as e:
                 print(f"Error drawing header image: {e}")
@@ -64,7 +64,7 @@ class NumberedCanvas:
             page_width = A4[0]
             
             # First line
-            line1 = "Dra. Victoria Potes Eugenes Arana  Fisioterapeuta reg. 60278 U.A.M"
+            line1 = "Dra. Victoria Potes Eugenia Arana  Fisioterapeuta reg. 60278 U.A.M"
             line1_width = canvas.stringWidth(line1, 'Helvetica', 9)
             x1 = (page_width - line1_width) / 2
             y1 = 80  # Position Y for the first line
@@ -201,9 +201,9 @@ class PDFService:
             'CustomTitle',
             parent=styles['Heading1'],
             fontSize=18,
-            spaceAfter=30,
+            spaceAfter=15,
             alignment=TA_CENTER,
-            textColor=colors.darkblue
+            textColor=colors.black
         )
         
         subtitle_style = ParagraphStyle(
@@ -211,7 +211,7 @@ class PDFService:
             parent=styles['Heading2'],
             fontSize=14,
             spaceAfter=12,
-            textColor=colors.darkblue
+            textColor=colors.black
         )
         
         normal_style = ParagraphStyle(
@@ -225,9 +225,8 @@ class PDFService:
         
         # Títle
         title = Paragraph("HISTORIA CLÍNICA", title_style)
-        story.append(Spacer(1, 30))
+        story.append(Spacer(1, 40))
         story.append(title)
-        story.append(Spacer(1, 20))
         
         # Patient information
         patient_title = Paragraph("", subtitle_style)
@@ -298,6 +297,53 @@ class PDFService:
         else:
             no_medical_text = Paragraph("No hay historia clínica registrada para este paciente.", normal_style)
             story.append(no_medical_text)
+        
+        story.append(PageBreak())
+
+        story.append(Spacer(1, 40))
+        
+        signature_title = Paragraph("REGISTRO DIARIO DEL PACIENTE", title_style)
+        story.append(signature_title)
+        story.append(Spacer(1, 30))
+        
+        signature_data = []
+        
+        signature_data.append(['Paciente:', f"{user.name} {user.last_name}"])
+        
+        if hasattr(user, 'medical_record') and user.medical_record:
+            diagnosis = user.medical_record.diagnosis if hasattr(user.medical_record, 'diagnosis') and user.medical_record.diagnosis else 'No especificado'
+            signature_data.append(['Diagnóstico:', diagnosis])
+            
+            signature_data.append(['Fecha:', 'Firma:'])
+            
+            if hasattr(user.medical_record, 'evolutions') and user.medical_record.evolutions:
+                for evolution in user.medical_record.evolutions:
+                    evolution_date = evolution.date.strftime('%d/%m/%Y') if hasattr(evolution, 'date') and evolution.date else 'Fecha no especificada'
+                    signature_data.append([f'{evolution_date}', ' '])
+            else:
+                signature_data.append(['No hay evoluciones registradas', ''])
+        else:
+            signature_data.append(['Diagnóstico:', 'No especificado'])
+            signature_data.append(['Fecha:', 'Firma:'])
+            signature_data.append(['No hay evoluciones registradas', ''])
+        
+        signature_table = Table(signature_data, colWidths=[3*inch, 3*inch])
+        signature_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (0, 2), colors.Color(0.95, 0.95, 0.95)),  
+            ('BACKGROUND', (1, 2), (1, 2), colors.Color(0.95, 0.95, 0.95)),  
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 20),  
+            ('TOPPADDING', (0, 0), (-1, -1), 10),
+            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ]))
+        
+        story.append(signature_table)
                 
         
         doc.build(story)
