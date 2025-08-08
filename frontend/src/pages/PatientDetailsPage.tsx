@@ -62,7 +62,7 @@ export const PatientDetailsPage = () => {
 				/>
 			</header>
 			<article className='h-[90%] min-h-[300px] w-full overflow-auto rounded-md bg-white shadow-lg'>
-				<nav className='-mb-px flex gap-8 rounded-t-md border-b border-gray-200 bg-white p-4 *:cursor-pointer *:border-b-2 *:px-1 *:py-2'>
+				<nav className='-mb-px flex gap-8 rounded-t-md border-b border-gray-200 bg-white p-4 *:cursor-pointer *:border-b-2 *:px-1 *:py-2 overflow-x-auto'>
 					<button
 						type='button'
 						onClick={() => setActiveTab('medical-record')}
