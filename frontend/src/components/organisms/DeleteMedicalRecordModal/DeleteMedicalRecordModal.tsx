@@ -27,7 +27,7 @@ export const DeleteMedicalRecordModal = ({
 				del paciente{' '}
 				<span className='font-semibold text-black capitalize'>
 					{patient.name} {patient.last_name}
-				</span>{' '}
+				</span>
 				? <br />
 				Esta acción no se puede deshacer. Se eliminarán todos sus datos
 				asociados.
