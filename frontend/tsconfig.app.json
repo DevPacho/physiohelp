@@ -36,9 +36,7 @@
 			"@interfaces": ["src/interfaces/index.ts"],
 			"@pages": ["src/pages/index.ts"],
 			"@router": ["src/router/index.ts"],
-			"@store": ["src/store/index.ts"],
-			"@styles/*": ["src/styles/*"],
-			"@utils": ["src/utils/index.ts"]
+			"@styles/*": ["src/styles/*"]
 		}
 	},
 	"include": ["src", "vite.config.ts"]
