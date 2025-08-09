@@ -9,7 +9,6 @@ import { DeleteEvolutionModal } from '../DeleteEvolutionModal/DeleteEvolutionMod
 import { EvolutionModal } from '../EvolutionModal/EvolutionModal'
 
 interface IPatientEvolutionTabProps {
-	isLoading: boolean
 	evolutions: IEvolution[]
 	handleEvolutionSubmit: (
 		evolutionId: number | null,
@@ -22,10 +21,14 @@ interface IPatientEvolutionTabProps {
 	setSelectedEvolution: Dispatch<SetStateAction<IEvolution | null>>
 	selectedEvolutionToDelete: IEvolution | null
 	setSelectedEvolutionToDelete: Dispatch<SetStateAction<IEvolution | null>>
+	evolutionsCount: number | null
+	evolutionsPerPage: number
+	currentPage: number
+	isEvolutionModalLoading: boolean
+	isDeletingEvolution: boolean
 }
 
 export const PatientEvolutionTab = ({
-	isLoading,
 	evolutions,
 	handleEvolutionSubmit,
 	handleDeleteEvolution,
@@ -35,9 +38,14 @@ export const PatientEvolutionTab = ({
 	setSelectedEvolution,
 	selectedEvolutionToDelete,
 	setSelectedEvolutionToDelete,
+	evolutionsCount,
+	evolutionsPerPage,
+	currentPage,
+	isEvolutionModalLoading,
+	isDeletingEvolution,
 }: IPatientEvolutionTabProps) => (
 	<>
-		{evolutions.length === 0 ? (
+		{evolutionsCount === 0 ? (
 			<div className='flex flex-col justify-between gap-4 md:flex-row md:items-center'>
 				<p className='text-[15px]'>
 					No se ha encontrado ninguna evolución asociada a este paciente.
@@ -63,17 +71,22 @@ export const PatientEvolutionTab = ({
 						onClick={() => setShowCreateEvolutionModal(true)}
 					/>
 				</div>
-				{evolutions.map((evolution, evolutionIndex) => (
-					<EvolutionItem
-						key={evolution.id}
-						{...{
-							evolution,
-							evolutionIndex,
-							setSelectedEvolution,
-							setSelectedEvolutionToDelete,
-						}}
-					/>
-				))}
+				{evolutions.map((evolution, evolutionIndex) => {
+					const generalEvolutionIndex =
+						(currentPage - 1) * evolutionsPerPage + evolutionIndex
+
+					return (
+						<EvolutionItem
+							key={evolution.id}
+							{...{
+								evolution,
+								evolutionIndex: generalEvolutionIndex,
+								setSelectedEvolution,
+								setSelectedEvolutionToDelete,
+							}}
+						/>
+					)
+				})}
 			</div>
 		)}
 		{showCreateEvolutionModal && (
@@ -85,7 +98,7 @@ export const PatientEvolutionTab = ({
 				modalContentClassName='w-full xl:min-w-[600px] xl:w-fit'
 			>
 				<EvolutionModal
-					isLoading={isLoading}
+					isLoading={isEvolutionModalLoading}
 					onSubmit={evolutionData => handleEvolutionSubmit(null, evolutionData)}
 				/>
 			</Modal>
@@ -99,7 +112,7 @@ export const PatientEvolutionTab = ({
 				modalContentClassName='w-full xl:min-w-[600px] xl:w-fit'
 			>
 				<EvolutionModal
-					isLoading={isLoading}
+					isLoading={isEvolutionModalLoading}
 					isEdit={!!selectedEvolution}
 					evolution={selectedEvolution}
 					onSubmit={evolutionData =>
@@ -111,14 +124,14 @@ export const PatientEvolutionTab = ({
 		{selectedEvolutionToDelete && (
 			<Modal
 				title='Eliminar Evolución'
-				subtitle='Confirma la eliminación de la evolución.'
+				subtitle='Confirma la eliminación de la evolución seleccionada.'
 				isOpen={!!selectedEvolutionToDelete}
 				onClose={() => setSelectedEvolutionToDelete(null)}
-				modalContentClassName='w-full xl:min-w-[400px] xl:w-fit'
+				modalContentClassName='w-full xl:min-w-[700px] xl:w-fit'
 			>
 				<DeleteEvolutionModal
 					evolution={selectedEvolutionToDelete}
-					isDeletingEvolution={isLoading}
+					isDeletingEvolution={isDeletingEvolution}
 					deleteEvolution={handleDeleteEvolution}
 				/>
 			</Modal>

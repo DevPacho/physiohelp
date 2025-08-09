@@ -1,4 +1,4 @@
-import { useMedicalRecords } from '@hooks'
+import { useEvolutions, useMedicalRecords, usePagination } from '@hooks'
 
 import { Button, IcChevron } from '@components/atoms'
 import { Modal } from '@components/molecules'
@@ -18,7 +18,6 @@ export const PatientDetailsPage = () => {
 		currentPatient,
 		currentMedicalRecord,
 		isMedicalRecordLoading,
-		isEvolutionLoading,
 		isDownloadingPdf,
 		activeTab,
 		setActiveTab,
@@ -29,16 +28,41 @@ export const PatientDetailsPage = () => {
 		handleMedicalRecordSubmit,
 		isDeletingMedicalRecord,
 		handleDeleteMedicalRecord,
-		handleEvolutionSubmit,
-		handleDeleteEvolution,
 		handleGenerateAndDownloadPdf,
+	} = useMedicalRecords(patientId)
+
+	const {
+		evolutions,
+		evolutionsCount,
+		evolutionsPerPage,
+		currentPage,
+		setCurrentPage,
+		isEvolutionModalLoading,
 		showCreateEvolutionModal,
 		setShowCreateEvolutionModal,
 		selectedEvolution,
 		setSelectedEvolution,
+		handleEvolutionSubmit,
 		selectedEvolutionToDelete,
 		setSelectedEvolutionToDelete,
-	} = useMedicalRecords(patientId)
+		handleDeleteEvolution,
+		isDeletingEvolution,
+	} = useEvolutions(currentMedicalRecord?.id)
+
+	const totalPages = evolutionsCount
+		? Math.ceil(evolutionsCount / evolutionsPerPage)
+		: 1
+
+	const {
+		handlePageChange,
+		renderPaginationItems,
+		canGoPreviousPage,
+		canGoNextPage,
+	} = usePagination({
+		currentPage,
+		setCurrentPage,
+		totalPages,
+	})
 
 	if (!currentPatient) return null
 
@@ -124,8 +148,7 @@ export const PatientDetailsPage = () => {
 						currentPatient.type === 'SOAT' &&
 						currentMedicalRecord && (
 							<PatientEvolutionTab
-								isLoading={isEvolutionLoading}
-								evolutions={currentMedicalRecord.evolutions}
+								evolutions={evolutions}
 								handleEvolutionSubmit={handleEvolutionSubmit}
 								handleDeleteEvolution={handleDeleteEvolution}
 								showCreateEvolutionModal={showCreateEvolutionModal}
@@ -134,6 +157,11 @@ export const PatientDetailsPage = () => {
 								setSelectedEvolution={setSelectedEvolution}
 								selectedEvolutionToDelete={selectedEvolutionToDelete}
 								setSelectedEvolutionToDelete={setSelectedEvolutionToDelete}
+								evolutionsCount={evolutionsCount}
+								evolutionsPerPage={evolutionsPerPage}
+								currentPage={currentPage}
+								isEvolutionModalLoading={isEvolutionModalLoading}
+								isDeletingEvolution={isDeletingEvolution}
 							/>
 						)}
 					{showMedicalRecordModal && currentPatient && (
@@ -167,7 +195,7 @@ export const PatientDetailsPage = () => {
 							subtitle={`Confirma la eliminación de ${currentPatient.type === 'SOAT' ? 'la historia clínica' : 'el informe final'}.`}
 							isOpen={showDeleteMedicalRecordModal}
 							onClose={() => setShowDeleteMedicalRecordModal(false)}
-							modalContentClassName='w-full xl:min-w-[400px] xl:w-fit'
+							modalContentClassName='w-full xl:min-w-[700px] xl:w-fit'
 						>
 							<DeleteMedicalRecordModal
 								patient={currentPatient}
@@ -179,6 +207,29 @@ export const PatientDetailsPage = () => {
 					)}
 				</section>
 			</article>
+			{currentPatient.type === 'SOAT' &&
+				activeTab === 'evolutions' &&
+				totalPages > 1 && (
+					<ul className='mx-auto flex min-h-12 max-w-[80%] items-center justify-between gap-x-3.5 overflow-x-auto overflow-y-hidden rounded-md bg-white px-4 py-2.5 text-black shadow-lg *:flex *:size-6 *:shrink-0 *:items-center *:justify-center *:rounded *:hover:cursor-pointer'>
+						<li
+							className={`hover:bg-gray-100 ${
+								!canGoPreviousPage && '!cursor-not-allowed opacity-50'
+							}`}
+							onClick={() => handlePageChange(currentPage - 1)}
+						>
+							<IcChevron className='size-3.5 -rotate-90 fill-black' />
+						</li>
+						{renderPaginationItems()}
+						<li
+							className={`hover:bg-gray-100 ${
+								!canGoNextPage && '!cursor-not-allowed opacity-50'
+							}`}
+							onClick={() => handlePageChange(currentPage + 1)}
+						>
+							<IcChevron className='size-3.5 rotate-90 fill-black' />
+						</li>
+					</ul>
+				)}
 		</main>
 	)
 }
