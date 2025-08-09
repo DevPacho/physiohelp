@@ -135,7 +135,7 @@ class MedicalRecord(MedicalRecordBase):
     
     id: int
     user_id: int
-    evolutions: List[Evolution] = []
+    
 
 # ==================== USER SCHEMAS ====================
 
