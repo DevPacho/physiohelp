@@ -4,6 +4,7 @@ import { Router } from '@router'
 
 import '@styles/globals.css'
 
+import 'react-datepicker/dist/react-datepicker.css'
 import { createRoot } from 'react-dom/client'
 import { Toaster } from 'react-hot-toast'
 import { RouterProvider } from 'react-router'
