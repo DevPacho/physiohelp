@@ -63,6 +63,7 @@ class Evolution(EvolutionBase):
     
     id: int
     medical_record_id: int
+    evolution_number: Optional[int] = None
 
 # ==================== MEDICAL RECORD SCHEMAS ====================
 

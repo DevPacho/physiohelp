@@ -254,14 +254,49 @@ def validate_evolution_belongs_to_medical_record(db: Session, evolution_id: int,
     return evolution is not None
 
 # Evolution pagination functions
-def get_evolutions_by_medical_record(db: Session, medical_record_id: int, offset: int = 0, limit: int = 5):
-    """Get paginated evolutions for a medical record, ordered by ID ascending (oldest first)"""
-    return db.query(models.Evolution).filter(
-        models.Evolution.medical_record_id == medical_record_id
-    ).order_by(models.Evolution.id.asc()).offset(offset).limit(limit).all()
+def get_evolutions_by_medical_record(
+    db: Session,
+    medical_record_id: int,
+    offset: int = 0,
+    limit: int = 12,
+):
+    """
+    Lista evoluciones de una historia clínica con paginación tipo usuarios (skip/limit)
+    y orden descendente por ID (más nuevas primero).
+    Además, agrega 'evolution_number' con el índice cronológico global:
+      - La evolución más antigua es #1
+      - La evolución más reciente es #total
+    """
+    # Total de evoluciones para calcular el índice cronológico
+    total = (
+        db.query(models.Evolution)
+        .filter(models.Evolution.medical_record_id == medical_record_id)
+        .count()
+    )
 
-def get_evolutions_count_by_medical_record(db: Session, medical_record_id: int):
-    """Get total count of evolutions for a medical record"""
-    return db.query(models.Evolution).filter(
-        models.Evolution.medical_record_id == medical_record_id
-    ).count()
+    evolutions = (
+        db.query(models.Evolution)
+        .filter(models.Evolution.medical_record_id == medical_record_id)
+        .order_by(models.Evolution.id.desc())  # Nuevas primero
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+    # Asignar número cronológico a cada evolución según el orden mostrado (desc)
+    for i, evo in enumerate(evolutions):
+        # En el orden mostrado (desc), el primero de la página es el más reciente
+        # Su número cronológico es total - (offset + i)
+        setattr(evo, "evolution_number", total - (offset + i))
+
+    return evolutions
+
+def get_evolutions_count_by_medical_record(db: Session, medical_record_id: int) -> int:
+    """
+    Cantidad total de evoluciones para una historia clínica.
+    """
+    return (
+        db.query(models.Evolution)
+        .filter(models.Evolution.medical_record_id == medical_record_id)
+        .count()
+    )

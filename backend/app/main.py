@@ -269,21 +269,19 @@ def delete_medical_record(medical_record_id: int, db: Session = Depends(get_db))
 @app.get("/medical-records/{medical_record_id}/evolutions", response_model=list[schemas.Evolution], tags=["Evolutions"])
 def get_evolutions_by_medical_record(
     medical_record_id: int,
-    page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(10, ge=1, le=100, description="Items per page"),
+    skip: int = Query(0, ge=0, description="Cantidad a omitir"),
+    limit: int = Query(12, ge=1, le=100, description="Cantidad a devolver"),
     db: Session = Depends(get_db)
 ):
-    """Get paginated evolutions for a medical record"""
-    # Verificar que el medical record existe
+    """Get evolutions for a medical record with skip/limit pagination"""
     db_medical_record = crud.get_medical_record(db, medical_record_id=medical_record_id)
     if db_medical_record is None:
         raise HTTPException(status_code=404, detail="Medical record not found")
     
-    offset = (page - 1) * limit
     evolutions = crud.get_evolutions_by_medical_record(
         db=db, 
         medical_record_id=medical_record_id, 
-        offset=offset, 
+        offset=skip, 
         limit=limit
     )
     return evolutions
@@ -294,7 +292,6 @@ def get_evolutions_count_by_medical_record(
     db: Session = Depends(get_db)
 ):
     """Get total count of evolutions for a medical record"""
-    # Verificar que el medical record existe
     db_medical_record = crud.get_medical_record(db, medical_record_id=medical_record_id)
     if db_medical_record is None:
         raise HTTPException(status_code=404, detail="Medical record not found")
