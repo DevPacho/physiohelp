@@ -1,18 +1,15 @@
 import { Dispatch, SetStateAction, useEffect, useState } from 'react'
 
 import {
-	createEvolution,
 	createMedicalRecord,
-	deleteEvolution,
 	deleteMedicalRecord,
 	generateAndDownloadMedicalRecordPdf,
 	getMedicalRecordByPatientId,
 	getPatientById,
-	updateEvolution,
 	updateMedicalRecord,
 } from '@api'
 
-import { IEvolution, IMedicalRecord, IPatient } from '@interfaces'
+import { IMedicalRecord, IPatient } from '@interfaces'
 
 import toast from 'react-hot-toast'
 
@@ -34,21 +31,8 @@ interface IUseMedicalRecordsReturn {
 	) => Promise<void>
 	isDeletingMedicalRecord: boolean
 	handleDeleteMedicalRecord: (medicalRecordId: number) => Promise<void>
-	isEvolutionLoading: boolean
-	handleEvolutionSubmit: (
-		evolutionId: number | null,
-		evolutionData: Partial<IEvolution>
-	) => Promise<void>
-	isDeletingEvolution: boolean
-	handleDeleteEvolution: (evolutionId: number) => Promise<void>
 	activeTab: string
 	setActiveTab: Dispatch<SetStateAction<string>>
-	showCreateEvolutionModal: boolean
-	setShowCreateEvolutionModal: Dispatch<SetStateAction<boolean>>
-	selectedEvolution: IEvolution | null
-	setSelectedEvolution: Dispatch<SetStateAction<IEvolution | null>>
-	selectedEvolutionToDelete: IEvolution | null
-	setSelectedEvolutionToDelete: Dispatch<SetStateAction<IEvolution | null>>
 }
 
 export const useMedicalRecords = (
@@ -67,16 +51,7 @@ export const useMedicalRecords = (
 		useState<boolean>(false)
 	const [isDeletingMedicalRecord, setIsDeletingMedicalRecord] =
 		useState<boolean>(false)
-	const [isEvolutionLoading, setIsEvolutionLoading] = useState<boolean>(false)
-	const [isDeletingEvolution, setIsDeletingEvolution] = useState<boolean>(false)
 	const [activeTab, setActiveTab] = useState<string>('medical-record')
-	const [showCreateEvolutionModal, setShowCreateEvolutionModal] =
-		useState<boolean>(false)
-	const [selectedEvolution, setSelectedEvolution] = useState<IEvolution | null>(
-		null
-	)
-	const [selectedEvolutionToDelete, setSelectedEvolutionToDelete] =
-		useState<IEvolution | null>(null)
 
 	const patientIdNumber = Number(patientId)
 
@@ -196,87 +171,6 @@ export const useMedicalRecords = (
 			.finally(() => setIsDeletingMedicalRecord(false))
 	}
 
-	const handleEvolutionSubmit = async (
-		evolutionId: number | null,
-		evolutionData: Partial<IEvolution>
-	) => {
-		if (!currentMedicalRecord) return
-
-		setIsEvolutionLoading(true)
-
-		if (evolutionId) {
-			updateEvolution({ evolutionId, evolutionData })
-				.then(response => {
-					setCurrentMedicalRecord(prevCurrentMedicalRecord =>
-						prevCurrentMedicalRecord
-							? {
-									...prevCurrentMedicalRecord,
-									evolutions: prevCurrentMedicalRecord.evolutions.map(
-										evolution =>
-											evolution.id === evolutionId ? response : evolution
-									),
-								}
-							: null
-					)
-					setSelectedEvolution(null)
-
-					toast.success('Evolución actualizada exitosamente')
-				})
-				.catch(() =>
-					toast.error('Ha ocurrido un error al actualizar la evolución')
-				)
-				.finally(() => setIsEvolutionLoading(false))
-		} else {
-			createEvolution({
-				medicalRecordId: currentMedicalRecord.id,
-				evolutionData,
-			})
-				.then(response => {
-					setCurrentMedicalRecord(prevCurrentMedicalRecord =>
-						prevCurrentMedicalRecord
-							? {
-									...prevCurrentMedicalRecord,
-									evolutions: [
-										response,
-										...prevCurrentMedicalRecord.evolutions,
-									],
-								}
-							: null
-					)
-					setShowCreateEvolutionModal(false)
-
-					toast.success('Evolución creada exitosamente')
-				})
-				.catch(() => toast.error('Ha ocurrido un error al crear la evolución'))
-				.finally(() => setIsEvolutionLoading(false))
-		}
-	}
-
-	const handleDeleteEvolution = async (evolutionId: number) => {
-		if (!evolutionId) return
-
-		setIsDeletingEvolution(true)
-
-		deleteEvolution({ evolutionId })
-			.then(() => {
-				setCurrentMedicalRecord(prevCurrentMedicalRecord =>
-					prevCurrentMedicalRecord
-						? {
-								...prevCurrentMedicalRecord,
-								evolutions: prevCurrentMedicalRecord.evolutions.filter(
-									evolution => evolution.id !== evolutionId
-								),
-							}
-						: null
-				)
-				setSelectedEvolutionToDelete(null)
-
-				toast.success('Evolución eliminada exitosamente')
-			})
-			.catch(() => toast.error('Ha ocurrido un error al eliminar la evolución'))
-			.finally(() => setIsDeletingEvolution(false))
-	}
-
 	const handleGenerateAndDownloadPdf = () => {
 		if (!currentPatient) return
 
@@ -332,17 +226,7 @@ export const useMedicalRecords = (
 		handleMedicalRecordSubmit,
 		isDeletingMedicalRecord,
 		handleDeleteMedicalRecord,
-		isEvolutionLoading,
-		handleEvolutionSubmit,
-		isDeletingEvolution,
-		handleDeleteEvolution,
 		activeTab,
 		setActiveTab,
-		showCreateEvolutionModal,
-		setShowCreateEvolutionModal,
-		selectedEvolution,
-		setSelectedEvolution,
-		selectedEvolutionToDelete,
-		setSelectedEvolutionToDelete,
 	}
 }
