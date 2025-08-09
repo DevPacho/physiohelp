@@ -233,9 +233,9 @@ class PDFService:
         story.append(patient_title)
         
         patient_data = [
-            ['Nombre:', f"{user.name} {user.last_name}"],
-            ['Identificación:', user.identification],
-            ['Género:', 'Masculino' if user.gender == 'M' else 'Femenino' if user.gender == 'F' else 'Otro']
+            [Paragraph('<b>NOMBRE</b>'), f"{user.name} {user.last_name}"],
+            [Paragraph('<b>CC</b>'), user.identification],
+            [Paragraph('<b>GÉNERO</b>'), 'Masculino' if user.gender == 'M' else 'Femenino' if user.gender == 'F' else 'Otro']
         ]
         
         patient_table = Table(patient_data, colWidths=[2*inch, 4*inch])
@@ -261,11 +261,11 @@ class PDFService:
             story.append(medical_title)
             
             medical_data = [
-                ['Fecha:', medical_record.date.strftime('%d/%m/%Y') if hasattr(medical_record, 'date') and medical_record.date else 'No especificada'],
-                ['Edad del paciente:', str(medical_record.user_age) if hasattr(medical_record, 'user_age') and medical_record.user_age else 'No especificada'],
-                ['Diagnóstico:', medical_record.diagnosis if hasattr(medical_record, 'diagnosis') and medical_record.diagnosis else 'No especificado'],
-                ['Motivo de consulta:', medical_record.consultation_reason if hasattr(medical_record, 'consultation_reason') and medical_record.consultation_reason else 'No especificado'],
-                ['Número de sesiones:', str(medical_record.sessions) if hasattr(medical_record, 'sessions') and medical_record.sessions else 'No especificado']
+                [Paragraph('<b>FECHA</b>:'), medical_record.date.strftime('%d/%m/%Y') if hasattr(medical_record, 'date') and medical_record.date else 'No especificada'],
+                [Paragraph('<b>EDAD</b>:'), str(medical_record.user_age) if hasattr(medical_record, 'user_age') and medical_record.user_age else 'No especificada'],
+                [Paragraph('<b>DIAGNÓSTICO</b>:'), medical_record.diagnosis if hasattr(medical_record, 'diagnosis') and medical_record.diagnosis else 'No especificado'],
+                [Paragraph('<b>MOTIVO DE CONSULTA</b>:'), medical_record.consultation_reason if hasattr(medical_record, 'consultation_reason') and medical_record.consultation_reason else 'No especificado'],
+                [Paragraph('<b>SESIONES</b>:'), str(medical_record.sessions) if hasattr(medical_record, 'sessions') and medical_record.sessions else 'No especificado']
             ]
             
             medical_table = Table(medical_data, colWidths=[2*inch, 4*inch])
