@@ -149,7 +149,17 @@ export const usePatients = (): IUsePatientsReturn => {
 					setIsPatientModalOpen(false)
 					toast.success('Paciente creado exitosamente')
 				})
-				.catch(() => toast.error('Ha ocurrido un error al crear el paciente'))
+				.catch(error => {
+					const errorMessage = error.response.data.detail
+
+					if (errorMessage === 'User with this identification already exists') {
+						toast.error(
+							'Ya existe un paciente con el número de identificación digitado'
+						)
+					} else {
+						toast.error('Ha ocurrido un error al crear el paciente')
+					}
+				})
 				.finally(() => setIsPatientModalLoading(false))
 		}
 	}
@@ -178,8 +188,7 @@ export const usePatients = (): IUsePatientsReturn => {
 				if (remainingPatients.length === 0 && currentPage > 1) {
 					setCurrentPage(currentPage - 1)
 				}
-			})
-			.then(() => {
+
 				setIsDeletePatientModalOpen(false)
 				setSelectedPatientToDelete(null)
 				toast.success('Paciente eliminado exitosamente')
