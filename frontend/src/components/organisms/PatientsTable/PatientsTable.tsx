@@ -83,7 +83,7 @@ export const PatientsTable = () => {
 				<div className='flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:justify-end'>
 					<Input
 						type='text'
-						placeholder='Buscar pacientes...'
+						placeholder='Buscar pacientes'
 						value={patientToSearch}
 						onChange={setPatientToSearch}
 					/>
@@ -91,7 +91,9 @@ export const PatientsTable = () => {
 				</div>
 				<Modal
 					title={
-						patientModalType === 'create' ? 'Nuevo Paciente' : 'Actualizar Paciente'
+						patientModalType === 'create'
+							? 'Nuevo Paciente'
+							: 'Actualizar Paciente'
 					}
 					subtitle={
 						patientModalType === 'create'
@@ -196,7 +198,7 @@ export const PatientsTable = () => {
 											title='Actualizar paciente'
 											onClick={() => handleSelectPatientToUpdate(patient)}
 										>
-											<IcPencil className='size-5 fill-black hover:fill-primary-light' />
+											<IcPencil className='hover:fill-primary-light size-5 fill-black' />
 										</button>
 										<button
 											type='button'
