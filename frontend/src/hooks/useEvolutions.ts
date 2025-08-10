@@ -57,6 +57,27 @@ export const useEvolutions = (
 
 	const cachedEvolutions = useRef<Record<string, IEvolution[]>>({})
 
+	const recalculateEvolutionNumbers = (
+		evolutions: IEvolution[],
+		totalCount: number,
+		currentPageNumber: number
+	): IEvolution[] => {
+		const offset = (currentPageNumber - 1) * evolutionsPerPage
+
+		const evolutionsWithNumbers = evolutions.map(
+			(evolution, evolutionIndex) => {
+				const evolutionNumber = totalCount - (offset + evolutionIndex)
+
+				return {
+					...evolution,
+					evolution_number: evolutionNumber,
+				}
+			}
+		)
+
+		return evolutionsWithNumbers
+	}
+
 	const fetchEvolutionsCount = async () => {
 		if (!medicalRecordId) return
 
@@ -110,11 +131,19 @@ export const useEvolutions = (
 				evolutionData,
 			})
 				.then(response => {
-					setEvolutions(prevEvolutions =>
-						prevEvolutions.map(evolution =>
+					setEvolutions(prevEvolutions => {
+						const updatedEvolutions = prevEvolutions.map(evolution =>
 							evolution.id === evolutionId ? response : evolution
 						)
-					)
+
+						return evolutionsCount
+							? recalculateEvolutionNumbers(
+									updatedEvolutions,
+									evolutionsCount,
+									currentPage
+								)
+							: updatedEvolutions
+					})
 					cachedEvolutions.current = {}
 
 					setSelectedEvolution(null)
@@ -130,13 +159,28 @@ export const useEvolutions = (
 				evolutionData,
 			})
 				.then(response => {
-					setEvolutions(prevEvolutions => [response, ...prevEvolutions])
-					setEvolutionsCount(prevCount => (prevCount ? prevCount + 1 : 1))
-					cachedEvolutions.current = {}
+					const newEvolutionsCount = evolutionsCount ? evolutionsCount + 1 : 1
+
+					setEvolutionsCount(newEvolutionsCount)
 
 					if (currentPage !== 1) {
 						setCurrentPage(1)
+					} else {
+						setEvolutions(prevEvolutions => {
+							const newEvolutions = [response, ...prevEvolutions]
+							const limitedEvolutions = newEvolutions.slice(
+								0,
+								evolutionsPerPage
+							)
+
+							return recalculateEvolutionNumbers(
+								limitedEvolutions,
+								newEvolutionsCount,
+								1
+							)
+						})
 					}
+					cachedEvolutions.current = {}
 
 					setShowCreateEvolutionModal(false)
 					toast.success('Evolución creada exitosamente')
@@ -153,11 +197,9 @@ export const useEvolutions = (
 
 		deleteEvolution({ evolutionId })
 			.then(() => {
-				setEvolutions(prevEvolutions =>
-					prevEvolutions.filter(evolution => evolution.id !== evolutionId)
-				)
-				setEvolutionsCount(prevCount => (prevCount ? prevCount - 1 : 0))
-				cachedEvolutions.current = {}
+				const newEvolutionsCount = evolutionsCount ? evolutionsCount - 1 : 0
+
+				setEvolutionsCount(newEvolutionsCount)
 
 				const remainingEvolutions = evolutions.filter(
 					evolution => evolution.id !== evolutionId
@@ -165,7 +207,18 @@ export const useEvolutions = (
 
 				if (remainingEvolutions.length === 0 && currentPage > 1) {
 					setCurrentPage(currentPage - 1)
+				} else {
+					setEvolutions(() => {
+						return newEvolutionsCount > 0
+							? recalculateEvolutionNumbers(
+									remainingEvolutions,
+									newEvolutionsCount,
+									currentPage
+								)
+							: remainingEvolutions
+					})
 				}
+				cachedEvolutions.current = {}
 
 				setSelectedEvolutionToDelete(null)
 				toast.success('Evolución eliminada exitosamente')
