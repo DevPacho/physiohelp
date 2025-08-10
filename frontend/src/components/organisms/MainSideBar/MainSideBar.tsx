@@ -31,22 +31,16 @@ export const MainSideBar = ({
 				collapseSidebar ? 'xl:w-20' : 'xl:w-[300px]'
 			} w-[300px]`}
 		>
-			{collapseSidebar ? (
+			{collapseSidebar && !showSidebar ? (
 				<img
 					src={PhysioHelpIcon}
-					className={`h-24 min-h-24 object-center transition-all duration-300 ${
-						collapseSidebar && !showSidebar ? 'w-12 object-contain' : 'w-full'
-					}`}
+					className='h-24 min-h-24 w-12 object-contain object-center transition-all duration-300'
 					alt='PhysioHelp Icon'
 				/>
 			) : (
 				<img
 					src={PhysioHelpLogo}
-					className={`h-24 min-h-24 object-center transition-all duration-300 ${
-						collapseSidebar && !showSidebar
-							? 'xl:w-12 xl:object-contain'
-							: 'w-full'
-					}`}
+					className='h-24 min-h-24 w-full object-center transition-all duration-300'
 					alt='PhysioHelp Logo'
 				/>
 			)}
