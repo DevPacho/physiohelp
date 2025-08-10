@@ -400,12 +400,12 @@ class PDFService:
             
             # Tabla de información del informe final
             report_data = [
-                ['Fecha:', medical_record.date.strftime('%d/%m/%Y') if hasattr(medical_record, 'date') and medical_record.date else 'No especificada'],
-                ['Nombre:', f"{user.name} {user.last_name}"],
-                ['Cc:', user.identification],
-                ['Edad:', str(medical_record.user_age) if hasattr(medical_record, 'user_age') and medical_record.user_age else 'No especificada'],
-                ['Diagnóstico:', medical_record.diagnosis if hasattr(medical_record, 'diagnosis') and medical_record.diagnosis else 'No especificado'],
-                ['Sesiones:', str(medical_record.sessions) if hasattr(medical_record, 'sessions') and medical_record.sessions else 'No especificado']
+                [Paragraph('<b>Fecha:</b>'), medical_record.date.strftime('%d/%m/%Y') if hasattr(medical_record, 'date') and medical_record.date else 'No especificada'],
+                [Paragraph('<b>Nombre:</b>'), f"{user.name} {user.last_name}"],
+                [Paragraph('<b>CC:</b>'), user.identification],
+                [Paragraph('<b>Edad:</b>'), str(medical_record.user_age) if hasattr(medical_record, 'user_age') and medical_record.user_age else 'No especificada'],
+                [Paragraph('<b>Diagnóstico:</b>'), medical_record.diagnosis if hasattr(medical_record, 'diagnosis') and medical_record.diagnosis else 'No especificado'],
+                [Paragraph('<b>Sesiones:</b>'), str(medical_record.sessions) if hasattr(medical_record, 'sessions') and medical_record.sessions else 'No especificado']
             ]
             
             report_table = Table(report_data, colWidths=[2*inch, 4*inch])
