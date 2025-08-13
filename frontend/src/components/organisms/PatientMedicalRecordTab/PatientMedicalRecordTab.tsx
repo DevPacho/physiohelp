@@ -90,7 +90,7 @@ export const PatientMedicalRecordTab = ({
 							Diagnóstico
 						</label>
 						<span className='max-h-[200px] overflow-y-auto rounded-md bg-gray-50 p-4'>
-							<p className='text-sm whitespace-pre-wrap text-black'>
+							<p className='text-sm text-justify whitespace-pre-wrap text-black'>
 								{currentMedicalRecord.diagnosis || '----'}
 							</p>
 						</span>
@@ -100,7 +100,7 @@ export const PatientMedicalRecordTab = ({
 							Motivo de Consulta
 						</label>
 						<span className='max-h-[200px] overflow-y-auto rounded-md bg-gray-50 p-4'>
-							<p className='text-sm whitespace-pre-wrap text-black'>
+							<p className='text-sm text-justify whitespace-pre-wrap text-black'>
 								{currentMedicalRecord.consultation_reason || '----'}
 							</p>
 						</span>
@@ -111,7 +111,7 @@ export const PatientMedicalRecordTab = ({
 								Informe Final
 							</label>
 							<span className='max-h-[200px] overflow-y-auto rounded-md bg-gray-50 p-4'>
-								<p className='text-sm whitespace-pre-wrap text-black'>
+								<p className='text-sm text-justify whitespace-pre-wrap text-black'>
 									{currentMedicalRecord.report}
 								</p>
 							</span>

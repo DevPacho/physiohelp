@@ -1,9 +1,9 @@
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch, mm
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Image
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Image, KeepTogether
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
 from reportlab.platypus.doctemplate import PageTemplate, BaseDocTemplate
 from reportlab.platypus.frames import Frame
 from io import BytesIO
@@ -198,105 +198,100 @@ class PDFService:
         
         styles = getSampleStyleSheet()
         title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=18,
-            spaceAfter=15,
-            alignment=TA_CENTER,
-            textColor=colors.black
+            'CustomTitle', parent=styles['Heading1'], fontSize=18, spaceAfter=15, alignment=TA_CENTER, textColor=colors.black
         )
-        
         subtitle_style = ParagraphStyle(
-            'CustomSubtitle',
-            parent=styles['Heading2'],
-            fontSize=14,
-            spaceAfter=12,
-            textColor=colors.black
+            'CustomSubtitle', parent=styles['Heading2'], fontSize=14, spaceAfter=12, textColor=colors.black
         )
-        
         normal_style = ParagraphStyle(
-            'CustomNormal',
-            parent=styles['Normal'],
-            fontSize=10,
-            spaceAfter=6
+            'CustomNormal', parent=styles['Normal'], fontSize=10, spaceAfter=6, alignment=TA_JUSTIFY
+        )
+        bold_style = ParagraphStyle(
+            'CustomBold', parent=normal_style, fontName='Helvetica-Bold'
         )
         
         story = []
         
-        # Títle
         title = Paragraph("HISTORIA CLÍNICA", title_style)
         story.append(Spacer(1, 40))
         story.append(title)
         
-        # Patient information
-        patient_title = Paragraph("", subtitle_style)
-        story.append(patient_title)
-        
         patient_data = [
-            [Paragraph('<b>NOMBRE</b>'), f"{user.name} {user.last_name}"],
-            [Paragraph('<b>CC</b>'), user.identification],
-            [Paragraph('<b>GÉNERO</b>'), 'Masculino' if user.gender == 'M' else 'Femenino' if user.gender == 'F' else 'Otro']
+            [Paragraph('<b>NOMBRE:</b>', normal_style), Paragraph(f"{user.name} {user.last_name}", normal_style)],
+            [Paragraph('<b>CC:</b>', normal_style), Paragraph(user.identification, normal_style)],
+            [Paragraph('<b>GÉNERO:</b>', normal_style), Paragraph('Masculino' if user.gender == 'M' else 'Femenino' if user.gender == 'F' else 'Otro', normal_style)]
         ]
-        
         patient_table = Table(patient_data, colWidths=[2*inch, 4*inch])
         patient_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.95, 0.95, 0.95)),
-                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-                ('BACKGROUND', (1, 0), (1, -1), colors.white),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'), ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'), ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+            ('BACKGROUND', (1, 0), (1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
         ]))
-        
         story.append(patient_table)
-        story.append(Spacer(1, 20))
         
         
         if hasattr(user, 'medical_record') and user.medical_record:
             medical_record = user.medical_record
             
-            medical_title = Paragraph(" ", subtitle_style)
-            story.append(medical_title)
-            
-            medical_data = [
-                [Paragraph('<b>FECHA</b>:'), medical_record.date.strftime('%d/%m/%Y') if hasattr(medical_record, 'date') and medical_record.date else 'No especificada'],
-                [Paragraph('<b>EDAD</b>:'), str(medical_record.user_age) if hasattr(medical_record, 'user_age') and medical_record.user_age else 'No especificada'],
-                [Paragraph('<b>DIAGNÓSTICO</b>:'), medical_record.diagnosis if hasattr(medical_record, 'diagnosis') and medical_record.diagnosis else 'No especificado'],
-                [Paragraph('<b>MOTIVO DE CONSULTA</b>:'), medical_record.consultation_reason if hasattr(medical_record, 'consultation_reason') and medical_record.consultation_reason else 'No especificado'],
-                [Paragraph('<b>SESIONES</b>:'), str(medical_record.sessions) if hasattr(medical_record, 'sessions') and medical_record.sessions else 'No especificado']
+            medical_items = [
+                ('<b>FECHA</b>:', medical_record.date.strftime('%d/%m/%Y') if hasattr(medical_record, 'date') and medical_record.date else 'No especificada'),
+                ('<b>EDAD</b>:', str(medical_record.user_age) + " años" if hasattr(medical_record, 'user_age') and medical_record.user_age else 'No especificada'),
+                ('<b>DIAGNÓSTICO:</b>', medical_record.diagnosis if hasattr(medical_record, 'diagnosis') and medical_record.diagnosis else 'No especificado'),
+                ('<b>MOTIVO DE CONSULTA</b>:', medical_record.consultation_reason if hasattr(medical_record, 'consultation_reason') and medical_record.consultation_reason else 'No especificado'),
+                ('<b>SESIONES</b>:', str(medical_record.sessions) if hasattr(medical_record, 'sessions') and medical_record.sessions else 'No especificado')
             ]
             
-            medical_table = Table(medical_data, colWidths=[2*inch, 4*inch])
-            medical_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.95, 0.95, 0.95)),
-                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-                ('BACKGROUND', (1, 0), (1, -1), colors.white),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
-            ]))
-            
-            story.append(medical_table)
+            for i, (label, content) in enumerate(medical_items):
+                row_data = [[Paragraph(label, bold_style), Paragraph(content, normal_style)]]
+                row_table = Table(row_data, colWidths=[2*inch, 4*inch])
+                
+                style = TableStyle([
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                    ('LEFTPADDING', (0, 0), (-1, -1), 10),
+                    ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+                    ('TOPPADDING', (0, 0), (-1, -1), 6),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                    ('BACKGROUND', (0, 0), (0, 0), colors.Color(0.95, 0.95, 0.95)),
+                ])
+                
+                if i > 0:
+                    style.add('LINEABOVE', (0, 0), (-1, 0), 1, colors.transparent)
+
+                row_table.setStyle(style)
+                story.append(row_table)
+
             story.append(Spacer(1, 20))
             
             if hasattr(medical_record, 'evolutions') and medical_record.evolutions:
                 evolutions_title = Paragraph("EVOLUCIONES", subtitle_style)
                 story.append(evolutions_title)
-                
+
+                signature_image = None
+                if 'firma' in images_data and images_data['firma']:
+                    try:
+                        signature_image = Image(images_data['firma'], width=1.5*inch, height=0.7*inch, hAlign='LEFT')
+                    except Exception as e:
+                        print(f"Error al crear el objeto de imagen para la firma: {e}")
+
                 for i, evolution in enumerate(medical_record.evolutions, 1):
-                    evolution_date = evolution.date.strftime('%d/%m/%Y') if hasattr(evolution, 'date') and evolution.date else 'Fecha no especificada'
-                    evolution_observations = evolution.observations if hasattr(evolution, 'observations') and evolution.observations else 'Sin observaciones'
-                    evolution_text = f"<b>Evolución {i} - {evolution_date}:</b><br/>{evolution_observations}"
+                    evolution_text = f"<b>{evolution.date.strftime('%d/%m/%Y')}:</b><br/>{evolution.observations}"
                     evolution_para = Paragraph(evolution_text, normal_style)
-                    story.append(evolution_para)
-                    story.append(Spacer(1, 10))
+
+                    evolution_block = [evolution_para]
+                    if signature_image:
+                        evolution_block.append(Spacer(1, 6)) 
+                        evolution_block.append(signature_image)
+                    
+                    
+                    story.append(KeepTogether(evolution_block))
+                    story.append(Spacer(1, 18))
         else:
-            no_medical_text = Paragraph("No hay historia clínica registrada para este paciente.", normal_style)
-            story.append(no_medical_text)
+            story.append(Paragraph("No hay historia clínica registrada para este paciente.", normal_style))
         
         story.append(PageBreak())
 
@@ -305,46 +300,52 @@ class PDFService:
         signature_title = Paragraph("REGISTRO DIARIO DEL PACIENTE", title_style)
         story.append(signature_title)
         story.append(Spacer(1, 30))
-        
-        signature_data = []
-        
-        signature_data.append([Paragraph('<b>PACIENTE</b>', normal_style), Paragraph(f'<b>{user.name} {user.last_name}  CC: {user.identification}</b>', normal_style)])
-        
-        if hasattr(user, 'medical_record') and user.medical_record:
-            diagnosis = user.medical_record.diagnosis if hasattr(user.medical_record, 'diagnosis') and user.medical_record.diagnosis else 'No especificado'
-            signature_data.append([Paragraph('<b>DIAGNOSTICO</b>', normal_style), Paragraph(f'<b>{diagnosis}</b>', normal_style)])
-            
-            signature_data.append(['FECHA', 'FIRMA'])
-            
-            if hasattr(user.medical_record, 'evolutions') and user.medical_record.evolutions:
-                for evolution in user.medical_record.evolutions:
-                    evolution_date = evolution.date.strftime('%d/%m/%Y') if hasattr(evolution, 'date') and evolution.date else 'Fecha no especificada'
-                    signature_data.append([f'{evolution_date}', ' '])
-            else:
-                signature_data.append(['No hay evoluciones registradas', ''])
-        else:
-            signature_data.append(['Diagnóstico:', 'No especificado'])
-            signature_data.append(['Fecha:', 'Firma:'])
-            signature_data.append(['No hay evoluciones registradas', ''])
-        
-        signature_table = Table(signature_data, colWidths=[3*inch, 3*inch])
-        signature_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, 2), colors.Color(0.95, 0.95, 0.95)),  
-            ('BACKGROUND', (1, 2), (1, 2), colors.Color(0.95, 0.95, 0.95)),  
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 20),  
-            ('TOPPADDING', (0, 0), (-1, -1), 10),
-            ('LEFTPADDING', (0, 0), (-1, -1), 10),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+
+        paciente_data = [[Paragraph('<b>PACIENTE</b>', bold_style), Paragraph(f"<b>{user.name} {user.last_name} CC: {user.identification}</b>", normal_style)]]
+        paciente_table = Table(paciente_data, colWidths=[1.5*inch, 4.5*inch])
+        paciente_table.setStyle(TableStyle([
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('LEFTPADDING', (0,0), (-1,-1), 10), ('RIGHTPADDING', (0,0), (-1,-1), 10),
+            ('TOPPADDING', (0,0), (-1,-1), 6), ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+            ('BACKGROUND', (0, 0), (0, 0), colors.Color(0.95, 0.95, 0.95)),
+            ('LINEBELOW', (0, -1), (-1, -1), 1, colors.transparent),
         ]))
+        story.append(paciente_table)
+
+        diag_content = (medical_record.diagnosis if hasattr(user, 'medical_record') and user.medical_record and user.medical_record.diagnosis else 'No especificado')
+        diagnostico_data = [[Paragraph('<b>DIAGNÓSTICO</b>', bold_style), Paragraph(f"<b>{diag_content}</b>", normal_style)]]
+        diagnostico_table = Table(diagnostico_data, colWidths=[1.5*inch, 4.5*inch])
+        diagnostico_table.setStyle(TableStyle([
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('LEFTPADDING', (0,0), (-1,-1), 10), ('RIGHTPADDING', (0,0), (-1,-1), 10),
+            ('TOPPADDING', (0,0), (-1,-1), 6), ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+            ('BACKGROUND', (0, 0), (0, 0), colors.Color(0.95, 0.95, 0.95)),
+            ('LINEABOVE', (0, 0), (-1, 0), 1, colors.transparent),
+            ('LINEBELOW', (0, -1), (-1, -1), 1, colors.transparent),
+        ]))
+        story.append(diagnostico_table)
+
+        signature_list_data = [[Paragraph('<b>FECHA</b>', bold_style), Paragraph('<b>FIRMA</b>', bold_style)]]
+        if hasattr(user, 'medical_record') and user.medical_record and hasattr(user.medical_record, 'evolutions') and user.medical_record.evolutions:
+            for evolution in user.medical_record.evolutions:
+                signature_list_data.append([Paragraph(evolution.date.strftime('%d/%m/%Y'), normal_style), ''])
+        else:
+            signature_list_data.append([Paragraph('No hay evoluciones registradas', normal_style), ''])
         
+
+        signature_table = Table(signature_list_data, colWidths=[1.5*inch, 4.5*inch])
+
+        signature_table.setStyle(TableStyle([
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('LEFTPADDING', (0,0), (-1,-1), 10), ('RIGHTPADDING', (0,0), (-1,-1), 10),
+            ('TOPPADDING', (0,0), (-1,-1), 6), ('BOTTOMPADDING', (0,0), (-1,-1), 20),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.95, 0.95, 0.95)),
+            ('LINEABOVE', (0, 0), (-1, 0), 1, colors.transparent),
+        ]))
         story.append(signature_table)
-                
         
         doc.build(story)
         
@@ -382,30 +383,31 @@ class PDFService:
             'CustomNormal',
             parent=styles['Normal'],
             fontSize=10,
-            spaceAfter=6
+            spaceAfter=6,
+            alignment=TA_JUSTIFY
         )
         
-        # Contenido del PDF
+        
         story = []
         story.append(Spacer(1, 25))
         
-        # TÍTULO PRINCIPAL - INFORME FINAL
+       
         title = Paragraph("INFORME FINAL", title_style)
         story.append(title)
         story.append(Spacer(1, 5))
         
-        # Información del informe final
+        
         if hasattr(user, 'medical_record') and user.medical_record:
             medical_record = user.medical_record
             
-            # Tabla de información del informe final
+            
             report_data = [
-                [Paragraph('<b>Fecha:</b>'), medical_record.date.strftime('%d/%m/%Y') if hasattr(medical_record, 'date') and medical_record.date else 'No especificada'],
-                [Paragraph('<b>Nombre:</b>'), f"{user.name} {user.last_name}"],
+                [Paragraph('<b>FECHA:</b>'), medical_record.date.strftime('%d/%m/%Y') if hasattr(medical_record, 'date') and medical_record.date else 'No especificada'],
+                [Paragraph('<b>NOMBRE:</b>'), f"{user.name} {user.last_name}"],
                 [Paragraph('<b>CC:</b>'), user.identification],
-                [Paragraph('<b>Edad:</b>'), str(medical_record.user_age) if hasattr(medical_record, 'user_age') and medical_record.user_age else 'No especificada'],
-                [Paragraph('<b>Diagnóstico:</b>'), medical_record.diagnosis if hasattr(medical_record, 'diagnosis') and medical_record.diagnosis else 'No especificado'],
-                [Paragraph('<b>Sesiones:</b>'), str(medical_record.sessions) if hasattr(medical_record, 'sessions') and medical_record.sessions else 'No especificado']
+                [Paragraph('<b>EDAD:</b>'), str(medical_record.user_age) + " años" if hasattr(medical_record, 'user_age') and medical_record.user_age else 'No especificada'],
+                [Paragraph('<b>DIAGNÓSTICO:</b>'), Paragraph(medical_record.diagnosis if hasattr(medical_record, 'diagnosis') and medical_record.diagnosis else 'No especificado', normal_style)],
+                [Paragraph('<b>SESIONES:</b>'), str(medical_record.sessions) if hasattr(medical_record, 'sessions') and medical_record.sessions else 'No especificado']
             ]
             
             report_table = Table(report_data, colWidths=[2*inch, 4*inch])
@@ -413,6 +415,7 @@ class PDFService:
                 ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.95, 0.95, 0.95)),
                 ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                 ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
                 ('FONTSIZE', (0, 0), (-1, -1), 10),
                 ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
@@ -423,7 +426,7 @@ class PDFService:
             story.append(report_table)
             story.append(Spacer(1, 20))
             
-            # Campo REPORT (contenido del informe final)
+            
             if hasattr(medical_record, 'report') and medical_record.report:
                 report_title = Paragraph("INFORME:", subtitle_style)
                 story.append(report_title)
@@ -438,7 +441,7 @@ class PDFService:
             no_medical_text = Paragraph("No hay información médica registrada para este paciente.", normal_style)
             story.append(no_medical_text)
         
-        # Construir PDF
+        
         doc.build(story)
         
         buffer.seek(0)

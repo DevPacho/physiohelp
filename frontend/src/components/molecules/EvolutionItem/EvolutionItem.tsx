@@ -41,7 +41,7 @@ export const EvolutionItem = ({
 		<div className='flex flex-col gap-2 text-black'>
 			<h4 className='text-sm font-semibold'>Observaciones:</h4>
 			<span className='max-h-[200px] overflow-y-auto rounded-md bg-gray-50 p-4'>
-				<p className='text-sm whitespace-pre-wrap'>{evolution.observations}</p>
+				<p className='text-sm text-justify whitespace-pre-wrap'>{evolution.observations}</p>
 			</span>
 		</div>
 	</article>
