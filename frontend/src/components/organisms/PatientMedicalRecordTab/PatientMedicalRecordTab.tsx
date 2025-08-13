@@ -71,7 +71,7 @@ export const PatientMedicalRecordTab = ({
 						<label className='text-sm font-medium text-black'>Edad</label>
 						<p className='text-sm text-black'>
 							{currentMedicalRecord.user_age
-								? `${currentMedicalRecord.user_age} años`
+								? `${currentMedicalRecord.user_age} ${Number(currentMedicalRecord.user_age) === 1 ? 'año' : 'años'}`
 								: '----'}
 						</p>
 					</fieldset>

@@ -243,7 +243,7 @@ class PDFService:
             
             medical_items = [
                 ('<b>FECHA</b>:', medical_record.date.strftime('%d/%m/%Y') if hasattr(medical_record, 'date') and medical_record.date else 'No especificada'),
-                ('<b>EDAD</b>:', str(medical_record.user_age) + " años" if hasattr(medical_record, 'user_age') and medical_record.user_age else 'No especificada'),
+                ('<b>EDAD</b>:', f"{medical_record.user_age} {'año' if medical_record.user_age == 1 else 'años'}" if hasattr(medical_record, 'user_age') and medical_record.user_age is not None else 'No especificada'),
                 ('<b>DIAGNÓSTICO:</b>', medical_record.diagnosis if hasattr(medical_record, 'diagnosis') and medical_record.diagnosis else 'No especificado'),
                 ('<b>MOTIVO DE CONSULTA</b>:', medical_record.consultation_reason if hasattr(medical_record, 'consultation_reason') and medical_record.consultation_reason else 'No especificado'),
                 ('<b>SESIONES</b>:', str(medical_record.sessions) if hasattr(medical_record, 'sessions') and medical_record.sessions else 'No especificado')
@@ -412,7 +412,7 @@ class PDFService:
                 [Paragraph('<b>FECHA:</b>'), medical_record.date.strftime('%d/%m/%Y') if hasattr(medical_record, 'date') and medical_record.date else 'No especificada'],
                 [Paragraph('<b>NOMBRE:</b>'), f"{user.name} {user.last_name}"],
                 [Paragraph('<b>CC:</b>'), user.identification],
-                [Paragraph('<b>EDAD:</b>'), str(medical_record.user_age) + " años" if hasattr(medical_record, 'user_age') and medical_record.user_age else 'No especificada'],
+                [Paragraph('<b>EDAD:</b>'), f"{medical_record.user_age} {'año' if medical_record.user_age == 1 else 'años'}" if hasattr(medical_record, 'user_age') and medical_record.user_age is not None else 'No especificada'],
                 [Paragraph('<b>DIAGNÓSTICO:</b>'), Paragraph(medical_record.diagnosis if hasattr(medical_record, 'diagnosis') and medical_record.diagnosis else 'No especificado', normal_style)],
                 [Paragraph('<b>SESIONES:</b>'), str(medical_record.sessions) if hasattr(medical_record, 'sessions') and medical_record.sessions else 'No especificado']
             ]
