@@ -431,7 +431,7 @@ class PDFService:
 
         if 'firma' in images_data and images_data['firma']:
                 try:
-                    story.append(Spacer(1, 48)) 
+                    story.append(Spacer(1, 15)) 
                     firma_img = Image(images_data['firma'], width=150, height=70)
                     firma_img.hAlign = 'LEFT'
                     story.append(firma_img)
