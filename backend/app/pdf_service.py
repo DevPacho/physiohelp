@@ -16,6 +16,9 @@ import requests
 
 from . import models
 
+
+
+
 class NumberedCanvas:
     """Canvas personalizado para agregar header, footer, fondo y firma"""
     
@@ -42,7 +45,7 @@ class NumberedCanvas:
             except Exception as e:
                 print(f"Error drawing background image: {e}")
         
-     # Header
+        # Header
         if 'header' in self.images_data and self.images_data['header']:
             try:
                 header_width = 310
@@ -90,16 +93,7 @@ class NumberedCanvas:
         except Exception as e:
             print(f"Error drawing footer text: {e}")       
         
-    
-        if is_last_page and 'firma' in self.images_data and self.images_data['firma']:
-            try:
-                firma_width = 150
-                firma_height = 70
-                x = 72  
-                y = 100   
-                canvas.drawImage(self.images_data['firma'], x, y, width=firma_width, height=firma_height)
-            except Exception as e:
-                print(f"Error drawing signature image: {e}")
+
 
 class CustomDocTemplate(BaseDocTemplate):
     """Template personalizado para manejar múltiples páginas"""
@@ -107,60 +101,37 @@ class CustomDocTemplate(BaseDocTemplate):
     def __init__(self, filename, images_data, **kwargs):
         BaseDocTemplate.__init__(self, filename, **kwargs)
         self.images_data = images_data
-        self.total_pages = 1  
-        self.current_page = 0
-        self.pages_built = [] 
         
         frame = Frame(
-            72, 180,  
-            A4[0] - 144, A4[1] - 280,  
+            72, 100,  
+            A4[0] - 144, A4[1] - 200,  
             leftPadding=0, bottomPadding=0, rightPadding=0, topPadding=0
         )
         
-        template = PageTemplate(id='normal', frames=frame, onPage=self.on_page)
+        template = PageTemplate(id='normal', frames=frame, onPage=self.on_page, onPageEnd=self.on_page_end)
         self.addPageTemplates([template])
-
+        
     def on_page(self, canvas, doc):
-        """Método llamado en cada página"""
-        self.current_page += 1
-        self.pages_built.append(self.current_page)
-        
-        if len(self.pages_built) > self.total_pages:
-            self.total_pages = len(self.pages_built)
-        
-        is_last_page = (self.current_page == self.total_pages)
-        
-        print(f"Drawing page {self.current_page}, total_pages: {self.total_pages}, is_last_page: {is_last_page}")
-        
+        """Método llamado en cada página para dibujar elementos de fondo/cabecera"""
         numbered_canvas = NumberedCanvas(canvas, doc, self.images_data)
-        numbered_canvas.draw_page_elements(is_last_page)
-        
+        numbered_canvas.draw_page_elements()
+
+    def on_page_end(self, canvas, doc):
+        """Método llamado al final de cada página para numeración"""
+        page_num = canvas.getPageNumber()
         canvas.setFont('Helvetica', 9)
-        canvas.drawRightString(A4[0] - 72, 15, f"Página {self.current_page} de {self.total_pages}")
+        canvas.drawRightString(A4[0] - 72, 15, f"Página {page_num}")
 
-    def build(self, flowables, **kwargs):
-        """Override build method simplificado"""
-        self.current_page = 0
-        self.pages_built = []
-        
-        BaseDocTemplate.build(self, flowables, **kwargs)
-        
-        actual_total = len(self.pages_built)
-        
-        if actual_total != self.total_pages:
-            print(f"Rebuilding PDF with correct page count: {actual_total}")
-            self.total_pages = actual_total
-            self.current_page = 0
-            self.pages_built = []
-            
-            BaseDocTemplate.build(self, flowables, **kwargs)
-
+    # Eliminamos el complejo manejo de 'is_last_page' que no era fiable
+    # El método build por defecto y el onPageEnd son suficientes ahora.
+    
 class PDFService:
     @staticmethod
     def load_pdf_images() -> Dict[str, str]:
         """Cargar imágenes desde el directorio assets del backend"""
         images_data = {}
         
+        # Para que el script se pueda ejecutar, simulamos la ruta y la creación de un archivo de firma.
         current_dir = Path(__file__).parent
         images_dir = current_dir / "assets" / "images" / "pdf"
         
@@ -168,6 +139,29 @@ class PDFService:
         
         images_dir.mkdir(parents=True, exist_ok=True)
         
+        # Crear una imagen de firma falsa si no existe
+        firma_path = images_dir / "firma.png"
+        if not firma_path.exists():
+            try:
+                # Usar Pillow para crear una imagen simple
+                from PIL import Image as PILImage, ImageDraw, ImageFont
+                img = PILImage.new('RGB', (300, 140), color = 'white')
+                draw = ImageDraw.Draw(img)
+                try:
+                    # Intenta cargar una fuente, si no, usa la por defecto
+                    font = ImageFont.truetype("arial.ttf", 40)
+                except IOError:
+                    font = ImageFont.load_default()
+                draw.text((10,10), "Firma Digital", fill='black', font=font)
+                draw.line((10, 80, 290, 80), fill='black', width=3)
+                img.save(firma_path)
+                print(f"Created dummy signature at {firma_path}")
+            except ImportError:
+                print("Pillow no está instalado. No se pudo crear la imagen de firma de prueba.")
+            except Exception as e:
+                print(f"Error creating dummy signature: {e}")
+
+
         image_files = {
             'header': 'header.png',
             'footer': 'footer.png', 
@@ -191,7 +185,6 @@ class PDFService:
         """Genera una historia clinica PDF para un usuario específico"""
         buffer = BytesIO()
         
-        # load images from the backend
         images_data = PDFService.load_pdf_images()
         
         doc = CustomDocTemplate(buffer, images_data, pagesize=A4)
@@ -204,7 +197,7 @@ class PDFService:
             'CustomSubtitle', parent=styles['Heading2'], fontSize=14, spaceAfter=12, textColor=colors.black
         )
         normal_style = ParagraphStyle(
-            'CustomNormal', parent=styles['Normal'], fontSize=10, spaceAfter=6, alignment=TA_JUSTIFY
+            'CustomNormal', parent=styles['Normal'], fontSize=12, spaceAfter=6, alignment=TA_JUSTIFY
         )
         bold_style = ParagraphStyle(
             'CustomBold', parent=normal_style, fontName='Helvetica-Bold'
@@ -279,7 +272,8 @@ class PDFService:
                 signature_image = None
                 if 'firma' in images_data and images_data['firma']:
                     try:
-                        signature_image = Image(images_data['firma'], width=1.5*inch, height=0.7*inch, hAlign='LEFT')
+                        signature_image = Image(images_data['firma'], width=1.5*inch, height=0.7*inch)
+                        signature_image.hAlign = 'LEFT'
                     except Exception as e:
                         print(f"Error al crear el objeto de imagen para la firma: {e}")
 
@@ -288,12 +282,13 @@ class PDFService:
                     evolution_para = Paragraph(evolution_text, normal_style)
 
                     evolution_block = [evolution_para]
+                    
                     if signature_image:
-                        evolution_block.append(Spacer(1, 6)) 
+                        evolution_block.append(Spacer(1, 6))  
                         evolution_block.append(signature_image)
                     
-                    
                     story.append(KeepTogether(evolution_block))
+                    
                     story.append(Spacer(1, 18))
         else:
             story.append(Paragraph("No hay historia clínica registrada para este paciente.", normal_style))
@@ -341,9 +336,7 @@ class PDFService:
         else:
             signature_list_data.append([Paragraph('No hay evoluciones registradas', normal_style), ''])
         
-
         signature_table = Table(signature_list_data, colWidths=[1.5*inch, 4.5*inch])
-
         signature_table.setStyle(TableStyle([
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
@@ -353,12 +346,22 @@ class PDFService:
             ('LINEABOVE', (0, 0), (-1, 0), 1, colors.transparent),
         ]))
         story.append(signature_table)
+
+        if 'firma' in images_data and images_data['firma']:
+            try:
+                story.append(Spacer(1, 24))  
+                firma_img = Image(images_data['firma'], width=150, height=70)
+                firma_img.hAlign = 'LEFT' 
+                story.append(firma_img)
+            except Exception as e:
+                print(f"Error al añadir la imagen de la firma al story: {e}")
         
         doc.build(story)
         
         buffer.seek(0)
         return buffer
     
+
     @staticmethod
     def generate_final_report(user: models.User) -> BytesIO:
         """Genera un informe final PDF para un usuario específico"""
@@ -370,43 +373,24 @@ class PDFService:
         
         styles = getSampleStyleSheet()
         title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=18,
-            spaceAfter=30,
-            alignment=TA_CENTER,
-            textColor=colors.black
+            'CustomTitle', parent=styles['Heading1'], fontSize=18, spaceAfter=30, alignment=TA_CENTER, textColor=colors.black
         )
-        
         subtitle_style = ParagraphStyle(
-            'CustomSubtitle',
-            parent=styles['Heading2'],
-            fontSize=14,
-            spaceAfter=12,
-            textColor=colors.black
+            'CustomSubtitle', parent=styles['Heading2'], fontSize=14, spaceAfter=12, textColor=colors.black
         )
-        
         normal_style = ParagraphStyle(
-            'CustomNormal',
-            parent=styles['Normal'],
-            fontSize=10,
-            spaceAfter=6,
-            alignment=TA_JUSTIFY
+            'CustomNormal', parent=styles['Normal'], fontSize=12, spaceAfter=6, alignment=TA_JUSTIFY
         )
-        
         
         story = []
         story.append(Spacer(1, 25))
         
-       
         title = Paragraph("INFORME FINAL", title_style)
         story.append(title)
         story.append(Spacer(1, 5))
         
-        
         if hasattr(user, 'medical_record') and user.medical_record:
             medical_record = user.medical_record
-            
             
             report_data = [
                 [Paragraph('<b>FECHA:</b>'), medical_record.date.strftime('%d/%m/%Y') if hasattr(medical_record, 'date') and medical_record.date else 'No especificada'],
@@ -424,7 +408,7 @@ class PDFService:
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
                 ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                 ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('FONTSIZE', (0, 0), (-1, -1), 12),
                 ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
                 ('BACKGROUND', (1, 0), (1, -1), colors.white),
                 ('GRID', (0, 0), (-1, -1), 1, colors.black)
@@ -433,23 +417,29 @@ class PDFService:
             story.append(report_table)
             story.append(Spacer(1, 20))
             
-            
             if hasattr(medical_record, 'report') and medical_record.report:
                 report_title = Paragraph("INFORME:", subtitle_style)
                 story.append(report_title)
-                
                 report_content = Paragraph(medical_record.report, normal_style)
                 story.append(report_content)
             else:
                 no_report_text = Paragraph("No hay informe registrado para este paciente.", normal_style)
                 story.append(no_report_text)
-                
         else:
             no_medical_text = Paragraph("No hay información médica registrada para este paciente.", normal_style)
             story.append(no_medical_text)
-        
-        
+
+        if 'firma' in images_data and images_data['firma']:
+                try:
+                    story.append(Spacer(1, 48)) 
+                    firma_img = Image(images_data['firma'], width=150, height=70)
+                    firma_img.hAlign = 'LEFT'
+                    story.append(firma_img)
+                except Exception as e:
+                    print(f"Error al añadir la imagen de la firma al story: {e}")    
+
         doc.build(story)
         
         buffer.seek(0)
         return buffer
+
