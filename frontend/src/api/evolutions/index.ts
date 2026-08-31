@@ -1,0 +1,5 @@
+export { createEvolution } from './createEvolution'
+export { deleteEvolution } from './deleteEvolution'
+export { getEvolutions } from './getEvolutions'
+export { getEvolutionsCount } from './getEvolutionsCount'
+export { updateEvolution } from './updateEvolution'

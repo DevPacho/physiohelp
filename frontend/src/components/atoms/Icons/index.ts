@@ -1,0 +1,7 @@
+export { IcChevron } from './IcChevron'
+export { IcMenu } from './IcMenu'
+export { IcMenuChevron } from './IcMenuChevron'
+export { IcPencil } from './IcPencil'
+export { IcSpinner } from './IcSpinner'
+export { IcTrash } from './IcTrash'
+export { IcUser } from './IcUser'

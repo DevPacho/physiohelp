@@ -1,0 +1,5 @@
+export { createMedicalRecord } from './createMedicalRecord'
+export { deleteMedicalRecord } from './deleteMedicalRecord'
+export { generateAndDownloadMedicalRecordPdf } from './generateAndDownloadMedicalRecordPdf'
+export { getMedicalRecordByPatientId } from './getMedicalRecordByIdentification'
+export { updateMedicalRecord } from './updateMedicalRecord'

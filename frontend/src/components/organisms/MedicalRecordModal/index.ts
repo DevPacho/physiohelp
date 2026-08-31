@@ -1,0 +1,1 @@
+export { MedicalRecordModal } from './MedicalRecordModal'
